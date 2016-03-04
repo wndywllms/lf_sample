@@ -8,19 +8,17 @@ Tools to compute LF for generic radio-optical catalogues:
 An `lf_sample` instance needs to be initilised minimally with an identifier and catalogue. The catalogue is a numpy record array with fields `z`, `power`, `opt_lum`. The example contains a catalogue utility function 
 
 
-`lf_sample`  Routines
-----------------------
+`lf_sample`  Routines:
 
-`calc_zmin_zmax` - calculates zmin and zmax needed for LF (will save this to files and read from a saved file if it exists)
+* `calc_zmin_zmax` - calculates zmin and zmax needed for LF (will save this to files and read from a saved file if it exists)
 
-`sub_z_sample` - select a subsample on redshift (will automatically update zmin/zmax)
+* `sub_z_sample` - select a subsample on redshift (will automatically update zmin/zmax)
 
-`sub_sample_by_field` - select a subsample on anyother field present in the catalogue record array
+* `sub_sample_by_field` - select a subsample on anyother field present in the catalogue record array
 
-`get_LF_f_areal` - call to  `get_LF_f_areal` in `LF_util`
+* `get_LF_f_areal` - call to  `get_LF_f_areal` in `LF_util`
 
 
-`LF_util`  Routines
--------------------
+`LF_util`  Routines:
 
-`get_LF_f_areal` - compute LF for given power bins, power, zmin, zmax, fcor, areal, area
+* `get_LF_f_areal` - compute LF for given power bins, power, zmin, zmax, fcor, areal, area
