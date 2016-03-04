@@ -2,7 +2,7 @@
 
 
 
-def select_good_radio_sample(maglim_bright, fmaglim_faint, radiofluxlim, good=True):
+def sdss_select_good_radio_sample(maglim_bright, fmaglim_faint, radiofluxlim, good=True):
     '''
     read sdss catalogue and output a lf_sample array
     '''
@@ -60,7 +60,7 @@ radiofluxlim = 5e-3               ## in Jy
 
 # load sdss catalogue
 # load sdss #
-cat_nvsssdss_all, lfcat_nvsssdss_all = sdss_sample_util.select_good_radio_sample()
+cat_nvsssdss_all, lfcat_nvsssdss_all = sdss_sample_util.sdss_select_good_radio_sample()
 
 # initialise lf_sample instance
 sdss_radio_sample = lf_sample.lf_sample("NVSS_SDSS", lfcat_nvsssdss_all, zlow=0.01, zhigh=0.3, radio_fluxlim_faint = sdss_sample_util.radiofluxlim, opt_fluxlim_faint = sdss_sample_util.fmaglim_faint, opt_fluxlim_bright=sdss_sample_util.fmaglim_bright, area=sdss_sample_util.areaSDSS)
