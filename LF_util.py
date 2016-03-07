@@ -380,48 +380,6 @@ def get_LF_f_areal(pbins_in, power, zmin, zmax, fcor, areal, area, ind=None, ver
                 if minpower > pbins[P_i]:
                     continue
                 
-                
-            #if Pzlim is not None:
-                #bin_pzlim_min = np.interp(pbins[P_i], Pzlim[1], Pzlim[0])
-                #bin_pzlim_max = np.interp(pbins[P_i+1], Pzlim[1], Pzlim[0])
-                #print '**', bin_pzlim_min, bin_pzlim_max
-                
-                #if pbins[P_i+1] < bin_pzlim_min:
-                    ## there should be no sources
-                    #print pbins[P_i+1], bin_pzlim_min, '1'
-                    #continue
-                #if pbins[P_i+1] < bin_pzlim_max:
-                    ## there will be too few sources, and will miss many
-                    #print pbins[P_i+1], bin_pzlim_max, '2'
-                    #continue
-                    ##if  pbins[P_i] < bin_pzlim_min:
-                        ##print pbins[P_i], bin_pzlim_max, '2a'
-                        ##continue
-                    ##else:
-                        ###prob ok
-                        ##print pbins[P_i], bin_pzlim_max, '2b'
-                        ##continue
-                        ## count sources in triangular region #
-                        ##tri_sel_ind = np.where( (power >= bin_pzlim_min)  & (power < bin_pzlim_max) )[0]
-                        ##bin_poser_max = power[selind].max()
-                ## now definitely pbins[P_i+1] >= bin_pzlim_max
-                #if  pbins[P_i] < bin_pzlim_min:
-                    #print pbins[P_i], bin_pzlim_max, '3'
-                    ### this is a bit more dodgy
-                    ### pass for now
-                    #continue
-                    ##pbins[P_i] = np.max(Pzlim[1])
-                    ##dp[P_i] = pbins[P_i+1] - pbins[P_i]
-                #if  pbins[P_i] > bin_pzlim_min:
-                    #print pbins[P_i], bin_pzlim_min, '4'
-                    #continue
-                    ### this should be pretty ok
-                    ##pbins[P_i] = bin_pzlim_max
-                    ##dp[P_i] = pbins[P_i+1] - pbins[P_i]
-                    ##print dp[P_i]
-                
-        
-        
             zmax_h = zmax[sel_ind]
             zmin_h = zmin[sel_ind]
             areal_h = areal[sel_ind]
