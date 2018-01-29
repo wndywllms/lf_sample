@@ -1,5 +1,6 @@
 import pyfits as pf
 from utils.fits_util import *
+from astropy.table import Table, Column
 #from LF_util import *
 import LF_util
 import numpy as np
@@ -293,9 +294,6 @@ class lf_sample:
     
     def calc_zmin_zmax(self, plot=False):
         
-        from numpy.lib.recfunctions import rec_append_fields
-        
-        
         haspower = False
         if 'power' in self.cat.dtype.names:
             haspower = True
@@ -313,12 +311,13 @@ class lf_sample:
 
         if haspower:
             if 'Pzmax' not in self.cat.dtype.names:
-                self.cat = rec_append_fields(self.cat, ('Pzmax'),  (Pzmax) )
+                self.cat.add_column(Column(Pzmax, 'Pzmax') )
             else:
                 self.cat['Pzmax'] = Pzmax
             
         if 'Optzmax' not in self.cat.dtype.names:
-            self.cat = rec_append_fields(self.cat, ('Optzmax', 'Optzmin'),  (Optzmax, Optzmin) )
+            self.cat.add_column(Column(Optzmax, 'Optzmax') )
+            self.cat.add_column(Column(Optzmin, 'Optzmin') )
         else:
             self.cat['Optzmax'] = Optzmax
             self.cat['Optzmin'] = Optzmin
@@ -347,23 +346,23 @@ class lf_sample:
         zmin = t1
         
         if 'zmin' not in self.cat.dtype.names:
-            self.cat = rec_append_fields(self.cat, ('zmin'),  (zmin) )
+            self.cat.add_column(Column(zmin, 'zmin'))
         else:
             self.cat['zmin'] = zmin
             
         if 'zmax' not in self.cat.dtype.names:
-            self.cat = rec_append_fields(self.cat, ('zmax'),  (zmax) )
+            self.cat.add_column(Column(zmax, 'zmax'))
         else:
             self.cat['zmax'] = zmax
             
             
         if 'Fcor' not in self.cat.dtype.names:
-            self.cat = rec_append_fields(self.cat, ('Fcor'),  ( np.ones(len(zmax)) ) )
+            self.cat.add_column(Column(np.ones(len(zmax)), 'Fcor'))
         else:
             self.cat['Fcor'] = np.ones(len(zmax))
             
         if 'areal' not in self.cat.dtype.names:
-            self.cat = rec_append_fields(self.cat, ('areal'),  (np.ones(len(zmax))) )
+            self.cat.add_column(Column(np.ones(len(zmax)), 'areal'))
         else:
             self.cat['areal'] = np.ones(len(zmax))
 
@@ -372,9 +371,6 @@ class lf_sample:
     
     
     def calc_Vzmin_Vzmax(self, plot=True, verbose=True, forcecalc=False, savefiles=True):
-        
-        from numpy.lib.recfunctions import rec_append_fields
-        
         
         haspower = False
         if 'power' in self.cat.dtype.names:
@@ -398,16 +394,17 @@ class lf_sample:
 
         if haspower:
             if 'PVzmax' not in self.cat.dtype.names:
-                self.cat = rec_append_fields(self.cat, ('PVzmax'),  (PVzmax) )
+                self.cat.add_column(Column(PVzmax, 'PVzmax'))
             else:
                 self.cat['PVzmax'] = PVzmax
             if 'PVzmin' not in self.cat.dtype.names:
-                self.cat = rec_append_fields(self.cat, ('PVzmin'),  (PVzmin) )
+                self.cat.add_column(Column(PVzmin, 'PVzmin'))
             else:
                 self.cat['PVzmin'] = PVzmin
             
         if 'OptVzmax' not in self.cat.dtype.names:
-            self.cat = rec_append_fields(self.cat, ('OptVzmax', 'OptVzmin'),  (OptVzmax, OptVzmin) )
+            self.cat.add_column(Column(OptVzmax, 'OptVzmax'))
+            self.cat.add_column(Column(OptVzmin, 'OptVzmin'))
         else:
             self.cat['OptVzmax'] = OptVzmax
             self.cat['OptVzmin'] = OptVzmin
@@ -444,23 +441,23 @@ class lf_sample:
             Vzmin = t1
         
         if 'Vzmin' not in self.cat.dtype.names:
-            self.cat = rec_append_fields(self.cat, ('Vzmin'),  (Vzmin) )
+            self.cat.add_column(Column(Vzmin, 'Vzmin'))
         else:
             self.cat['Vzmin'] = Vzmin
             
         if 'Vzmax' not in self.cat.dtype.names:
-            self.cat = rec_append_fields(self.cat, ('Vzmax'),  (Vzmax) )
+            self.cat.add_column(Column(Vzmax, 'Vzmax'))
         else:
             self.cat['Vzmax'] = Vzmax
             
             
         if 'Fcor' not in self.cat.dtype.names:
-            self.cat = rec_append_fields(self.cat, ('Fcor'),  ( np.ones(len(Vzmax)) ) )
+            self.cat.add_column(Column(np.ones(len(Vzmax)), 'Fcor'))
         else:
             self.cat['Fcor'] = np.ones(len(Vzmax))
             
         if 'areal' not in self.cat.dtype.names:
-            self.cat = rec_append_fields(self.cat, ('areal'),  (np.ones(len(Vzmax))) )
+            self.cat.add_column(Column(np.ones(len(Vzmax)), 'areal'))
         else:
             self.cat['areal'] = np.ones(len(Vzmax))
 
