@@ -1,5 +1,5 @@
 import pyfits as pf
-from fits_util import *
+from utils.fits_util import *
 #from LF_util import *
 import LF_util
 import numpy as np
@@ -8,6 +8,7 @@ import os
 import sys
 
 import cosmolopy as cosmo
+default_cosmo = {'omega_M_0':0.3, 'omega_lambda_0':0.7, 'omega_k_0':0.0, 'h':0.70}
 
 
 #from cosmos_sample_util import *
@@ -47,17 +48,55 @@ import cosmolopy as cosmo
 class lf_sample:
   
   
-    def __init__(self, name, cat, zlow=np.nan, zhigh=np.nan, radio_fluxlim_faint = np.nan, opt_fluxlim_faint = np.nan, opt_fluxlim_bright = np.nan, area=np.nan):
+    def __init__(self, name, cat, zlow=0, zhigh=20, radio_fluxlim_faint=np.nan, opt_fluxlim_faint=np.nan, opt_fluxlim_bright=np.nan, area=np.nan, rmsmap=None, completeness=None):
         
         
         self.name = name
         self.zlim_low = zlow
         self.zlim_high = zhigh
+        
+        
+        Vzlow = cosmo.distance.comoving_volume(self.zlim_low, **default_cosmo)
+        Vzhigh = cosmo.distance.comoving_volume(self.zlim_high, **default_cosmo)
+        self.Vzlim_low = Vzlow
+        self.Vzlim_high = Vzhigh
+        
         self.cat = cat
         self.Nsrcs = len(cat)
         
-        
         self.area = area
+        
+        self.rmsmap = None
+        if rmsmap is not None:
+            if isinstance(rmsmap, LF_util.rmsmapz):
+                self.rmsmap = rmsmap
+            elif isinstance(rmsmap, str):
+                if os.path.exists(rmsmap):
+                    self.rmsmap = LF_util.rmsmapz(rmsmap)
+                    self.rmsmap.interp_setup(1e21,1e28,5.0)
+                    # update area
+                    A = self.rmsmap.area *(np.pi/180.)**2  # in sterad
+                    if A != self.area:
+                        print 'WARNING updating area, using {A:.3f} deg^2 from the rms map'.format(A=A/(np.pi/180.)**2) 
+                        self.area = A
+                    
+                else:
+                    print "WARNING given rmsmap {map:s} does not exist, continuing without".format(map=rmsmap)
+            else:
+                print "WARNING given rmsmap type not understood, continuing without"
+            
+        self.completeness = None
+        if completeness is not None:
+            if isinstance(completeness, LF_util.completenessf):
+                self.completeness = completeness
+            elif isinstance(completeness, str):
+                if os.path.exists(completeness):
+                    self.completeness = LF_util.completenessf(completeness)
+                else:
+                    print "WARNING given completeness {map:s} does not exist, continuing without".format(map=completeness)
+            else:
+                    print "WARNING given completeness type not understoof, continuing without".format(map=completeness)
+        
         
         self.radio_fluxlim_faint = radio_fluxlim_faint
         self.opt_fluxlim_faint = opt_fluxlim_faint
@@ -90,13 +129,13 @@ class lf_sample:
         return
     
     def copy(self):
-        return lf_sample(self.name, self.cat, zlow=self.zlim_low, zhigh=self.zlim_high, radio_fluxlim_faint = self.radio_fluxlim_faint, opt_fluxlim_faint = self.opt_fluxlim_faint, opt_fluxlim_bright = self.opt_fluxlim_bright, area=self.area)
+        return lf_sample(self.name, self.cat, zlow=self.zlim_low, zhigh=self.zlim_high, radio_fluxlim_faint=self.radio_fluxlim_faint, opt_fluxlim_faint=self.opt_fluxlim_faint, opt_fluxlim_bright=self.opt_fluxlim_bright, area=self.area, rmsmap=self.rmsmap, completeness=self.completeness)
     
     def copy_subcat(self, name, cat):
-        return lf_sample(name, cat, zlow=self.zlim_low, zhigh=self.zlim_high, radio_fluxlim_faint = self.radio_fluxlim_faint, opt_fluxlim_faint = self.opt_fluxlim_faint, opt_fluxlim_bright = self.opt_fluxlim_bright, area=self.area)
+        return lf_sample(name, cat, zlow=self.zlim_low, zhigh=self.zlim_high, radio_fluxlim_faint = self.radio_fluxlim_faint, opt_fluxlim_faint=self.opt_fluxlim_faint, opt_fluxlim_bright=self.opt_fluxlim_bright, area=self.area, rmsmap=self.rmsmap, completeness=self.completeness)
     
     
-    def sub_z_sample(self, name, zlow, zhigh):
+    def sub_z_sample(self, name, zlow, zhigh,forcecalc=False, savefiles=True, plot=False):
         ''' make a new subsample with name 'name' from the z range provided'''
         
         #new_self = self.copy()
@@ -113,15 +152,18 @@ class lf_sample:
         
         new_self.zlim_low = zlow
         new_self.zlim_high = zhigh
+        new_self.Vzlim_low = cosmo.distance.comoving_volume(zlow, **default_cosmo)
+        new_self.Vzlim_high = cosmo.distance.comoving_volume(zhigh, **default_cosmo)
         
         new_self.set_power_z_limit()
         
-        new_self.calc_zmin_zmax()
+        #new_self.calc_zmin_zmax()
+        new_self.calc_Vzmin_Vzmax(forcecalc=forcecalc, savefiles=savefiles, plot=plot)
         
         return new_self
     
     
-    def sub_sample_by_field(self, name, field, fieldlimlow, fieldlimhigh, req_new_volumes=False):
+    def sub_sample_by_field(self, name, field, fieldlimlow, fieldlimhigh, req_new_volumes=False, plot=False):
         ''' make a new subsample with name 'name' from the z range provided'''
         
         #new_self = self.copy()
@@ -136,7 +178,8 @@ class lf_sample:
         
         # calculate new zmin, zmax if needed
         if req_new_volumes:
-            new_self.calc_zmin_zmax()
+            #new_self.calc_zmin_zmax()
+            new_self.calc_Vzmin_Vzmax(plot=plot)
         
         return new_self
     
@@ -215,6 +258,38 @@ class lf_sample:
         
         return
     
+    def plot_Vzmin_Vzmax(self, logV=True):
+        
+        f=plt.figure()
+        if 'Vzmax' in self.cat.dtype.names:
+            c = plt.scatter(self.cat['power'], self.cat['Vzmax'], c=self.cat['z'], marker='v', s=20, vmin=0, vmax=3, edgecolor='none',label='Max')
+        if 'PVzmax' in self.cat.dtype.names:
+            c = plt.scatter(self.cat['power'], self.cat['PVzmax'], c=self.cat['z'], marker='v', s=10, vmin=0, vmax=3, edgecolor='none',label='Pmax')
+        if 'PVzmin' in self.cat.dtype.names:
+            c = plt.scatter(self.cat['power'], self.cat['PVzmin'], c=self.cat['z'], marker='^', s=10, vmin=0, vmax=3, edgecolor='none',label='Pmin')
+        if 'OptVzmax' in self.cat.dtype.names:
+            c = plt.scatter(self.cat['power'], self.cat['OptVzmax'], c=self.cat['z'], marker='1', s=10, vmin=0, vmax=3, edgecolor='none',label='Optmax')
+        if 'OptVzmin' in self.cat.dtype.names:
+            c = plt.scatter(self.cat['power'], self.cat['OptVzmin'], c=self.cat['z'], marker='^', s=10, vmin=0, vmax=3, edgecolor='none',label='Optmin')
+        if 'Vzmin' in self.cat.dtype.names:
+            c = plt.scatter(self.cat['power'], self.cat['Vzmin'], c=self.cat['z'], marker='2', s=20, vmin=0, vmax=3, edgecolor='none',label='Min')
+        if logV:
+            plt.semilogy()
+        plt.colorbar(c)
+        plt.legend(loc='upper left')
+        plt.minorticks_on()
+        plt.xlabel("power")
+        x1,x2 = plt.xlim()
+        plt.hlines(self.Vzlim_low, x1, x2, 'gray', alpha=0.5)
+        plt.hlines(self.Vzlim_high, x1, x2, 'gray', alpha=0.5)
+        plt.text(x1, self.Vzlim_low, str(self.zlim_low))
+        plt.text(x1, self.Vzlim_high, str(self.zlim_high))
+        plt.xlim(x1,x2)
+        plt.ylabel("Vz min/max")
+        plt.savefig('sample_Vzmax_Vzmin_{name}.png'.format(name=self.name))
+        plt.close(f)
+        
+        return
     
     def calc_zmin_zmax(self, plot=False):
         
@@ -296,6 +371,106 @@ class lf_sample:
         return
     
     
+    def calc_Vzmin_Vzmax(self, plot=True, verbose=True, forcecalc=False, savefiles=True):
+        
+        from numpy.lib.recfunctions import rec_append_fields
+        
+        
+        haspower = False
+        if 'power' in self.cat.dtype.names:
+            haspower = True
+        
+        if haspower:
+            print "getting Vzmin Vzmax for radio-optical sample {n}".format(n=self.name)
+        else:
+            print "getting Vzmin Vzmax for optical sample {n}".format(n=self.name)
+        
+        #at what redshift does each source fall below the flux density limit?
+        if haspower:
+            PVzmax = LF_util.get_Vzmax(self.cat['z'], 10.**self.cat['power'], self.radio_fluxlim_faint, rmsmap=self.rmsmap, completeness=self.completeness, stype='Radio',filename='Vzmax.radio.sav.%s.npy' %(self.name), clobber=forcecalc, savefile=savefiles)
+            PVzmin = LF_util.get_Vzmin(self.cat['z'], 10.**self.cat['power'], self.radio_fluxlim_faint, zmin=self.zlim_low, rmsmap=self.rmsmap, completeness=self.completeness, stype='Radio',filename='Vzmin.radio.sav.%s.npy' %(self.name), clobber=forcecalc, savefile=savefiles)
+        OptVzmax = LF_util.get_Vzmax(self.cat['z'], self.cat['opt_lum'], self.opt_fluxlim_faint, stype='Optical',filename='Vzmax.optical.sav.%s.npy' %(self.name), clobber=forcecalc, savefile=savefiles)
+        OptVzmin = LF_util.get_Vzmin(self.cat['z'], self.cat['opt_lum'], self.opt_fluxlim_bright, stype='Optical',filename='Vzmin.optical.sav.%s.npy' %(self.name), clobber=forcecalc, savefile=savefiles)
+        #import ipdb
+        #if haspower:
+            #if np.any(PVzmin >= PVzmax):
+                #ipdb.set_trace()
+
+        if haspower:
+            if 'PVzmax' not in self.cat.dtype.names:
+                self.cat = rec_append_fields(self.cat, ('PVzmax'),  (PVzmax) )
+            else:
+                self.cat['PVzmax'] = PVzmax
+            if 'PVzmin' not in self.cat.dtype.names:
+                self.cat = rec_append_fields(self.cat, ('PVzmin'),  (PVzmin) )
+            else:
+                self.cat['PVzmin'] = PVzmin
+            
+        if 'OptVzmax' not in self.cat.dtype.names:
+            self.cat = rec_append_fields(self.cat, ('OptVzmax', 'OptVzmin'),  (OptVzmax, OptVzmin) )
+        else:
+            self.cat['OptVzmax'] = OptVzmax
+            self.cat['OptVzmin'] = OptVzmin
+
+        #np.savez('sample_{name}.npz'.format(name=self.name), z=self.cat['z'], sm=self.smass, P=self.power )
+        
+        
+        Vzlim_high = cosmo.distance.comoving_volume(self.zlim_high, **default_cosmo)
+        if haspower:
+            ### Combine Vzmax's from radio, optical and z selections
+            Vzmax = Vzlim_high*np.ones(len(OptVzmax))
+            t1 = np.minimum(OptVzmax, PVzmax)
+            t2 = np.minimum(t1, Vzmax)
+            Vzmax = t2
+        else:
+            ### Combine Vzmax's from radio, optical and z selections
+            Vzmax = Vzlim_high*np.ones(len(OptVzmax))
+            t2 = np.minimum(OptVzmax, Vzmax)
+            Vzmax = t2
+                
+                
+        ### Combine Vzmins's from optical and z selections
+        Vzlim_low = cosmo.distance.comoving_volume(self.zlim_low, **default_cosmo)
+        Vzmin = Vzlim_low*np.ones(len(OptVzmin))
+        if haspower:
+            ### Combine Vzmin's from radio, optical and z selections
+            Vzmin = Vzlim_low*np.ones(len(OptVzmax))
+            t1 = np.minimum(Vzmin, PVzmin)
+            t2 = np.maximum(t1, OptVzmin)
+            Vzmin = t2
+            
+        else:
+            t1 = np.maximum(OptVzmin, Vzmin)
+            Vzmin = t1
+        
+        if 'Vzmin' not in self.cat.dtype.names:
+            self.cat = rec_append_fields(self.cat, ('Vzmin'),  (Vzmin) )
+        else:
+            self.cat['Vzmin'] = Vzmin
+            
+        if 'Vzmax' not in self.cat.dtype.names:
+            self.cat = rec_append_fields(self.cat, ('Vzmax'),  (Vzmax) )
+        else:
+            self.cat['Vzmax'] = Vzmax
+            
+            
+        if 'Fcor' not in self.cat.dtype.names:
+            self.cat = rec_append_fields(self.cat, ('Fcor'),  ( np.ones(len(Vzmax)) ) )
+        else:
+            self.cat['Fcor'] = np.ones(len(Vzmax))
+            
+        if 'areal' not in self.cat.dtype.names:
+            self.cat = rec_append_fields(self.cat, ('areal'),  (np.ones(len(Vzmax))) )
+        else:
+            self.cat['areal'] = np.ones(len(Vzmax))
+
+        
+        if plot and haspower:
+            self.plot_Vzmin_Vzmax()
+        
+        return
+    
+    
     def set_power_z_limit(self):
         zz = np.linspace(self.zlim_low, self.zlim_high, 10)
         Plim = np.log10(LF_util.RadioPower(self.radio_fluxlim_faint, zz, alpha=0.8)) 
@@ -311,7 +486,7 @@ class lf_sample:
         dlogp_radio_lf = (pgrid[1:]-pgrid[:-1])/2.
         
         #print self.cat['power']
-        rho, rhoerr, num = LF_util.get_LF_f_areal(pgrid, self.cat['power'], self.cat['zmin'], self.cat['zmax'], self.cat['Fcor'], self.cat['areal'], self.area, ignoreMinPower=ignoreMinPower)
+        rho, rhoerr, num = LF_util.get_LF_rms_f_areal(pgrid, self.cat['power'], self.cat['Vzmin'], self.cat['Vzmax'], self.cat['Fcor'], self.cat['areal'], self.area, ignoreMinPower=ignoreMinPower)
         #print self.cat['power']
         #print pgrid
         #print type(pgrid)
@@ -383,11 +558,19 @@ masscompleteness - mass(z) function describing the completeness envelope
         
         # zmax determined from mass-completeness also #
         SMzmax = masscompleteness(m=sm_complete_sample.cat['smass'])
-        sm_complete_sample.cat['zmax']= np.minimum(sm_complete_sample.cat['zmax'], SMzmax)
+        VSMzmax = cosmo.distance.comoving_volume(SMzmax, **default_cosmo)
+        #sm_complete_sample.cat['Vzmax']=
+        newVSMzmax = np.minimum(sm_complete_sample.cat['Vzmax'], VSMzmax)
+        
+        #import ipdb
+        #ipdb.set_trace()
     
         
         #print self.cat['power']
-        rho, rhoerr, num = LF_util.get_LF_f_areal(smgrid, sm_complete_sample.cat['smass'], sm_complete_sample.cat['zmin'], sm_complete_sample.cat['zmax'], sm_complete_sample.cat['Fcor'], sm_complete_sample.cat['areal'], sm_complete_sample.area, xstr="SM")
+        #rho, rhoerr, num = LF_util.get_LF_rms_f_areal(smgrid, sm_complete_sample.cat['smass'], sm_complete_sample.cat['Vzmin'], sm_complete_sample.cat['Vzmax'], sm_complete_sample.cat['Fcor'], sm_complete_sample.cat['areal'], sm_complete_sample.area, xstr="SM")
+        rho, rhoerr, num = LF_util.get_LF_rms_f_areal(smgrid, sm_complete_sample.cat['smass'], sm_complete_sample.cat['Vzmin'], newVSMzmax, sm_complete_sample.cat['Fcor'], sm_complete_sample.cat['areal'], sm_complete_sample.area, xstr="SM")
+        
+        
         #print self.cat['power']
         #print pgrid
         #print type(pgrid)
