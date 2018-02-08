@@ -32,7 +32,7 @@ class completenessf(object):
 
 class rmsmapz(object):
     def __init__(self,map,sampling=100):
-        # map is a 2D nan-blanked FITS array as produced by PyBDSM
+        # map is a 2D nan-blanked FITS array as produced by PyBDSF
         hdu=fits.open(map)
         self.data=hdu[0].data
         self.sampling=sampling
@@ -85,6 +85,28 @@ class rmsmapz(object):
         return vmax
     
     
+class rmsz(rmsmapz):
+    ''' a class to use stored data instead of computing the histogram directly'''
+    
+    def __init__(self,npyfile):
+        
+        rms = np.load(npyfile)
+        
+        self.sampling = rms['sampling']
+        
+        self.bins = rms['bins']
+        
+        self.centres = rms['centres']
+        self.hist = rms['hist']
+        self.area = rms['area']
+        self.max = rms['dmax']
+        self.min = rms['dmin']
+        
+        #self.hist=np.asfarray(np.histogram(cdata,self.bins)[0])/len(cdata)
+        #self.area=len(cdata)*hdu[0].header['CDELT1']**2.0 # in sq. deg
+        print 'Read',npyfile,'area is',self.area,'deg^2'
+        return
+
 
 def RadioPower(Flux, z, alpha=0.7):
     """RadioPower(Flux, z, alpha=0.7)
