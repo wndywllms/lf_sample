@@ -11,6 +11,8 @@ import sys
 import cosmolopy as cosmo
 default_cosmo = {'omega_M_0':0.3, 'omega_lambda_0':0.7, 'omega_k_0':0.0, 'h':0.70}
 
+import warnings
+warnings.filterwarnings("ignore")
 
 #from cosmos_sample_util import *
 #from sdss_sample_util import *
@@ -144,7 +146,7 @@ class lf_sample:
         thisname = self.name
         
         
-        ind_z = np.where((self.cat['z'] > zlow) & (self.cat['z'] <= zhigh))[0]
+        ind_z = np.where((self.cat['z'] >= zlow) & (self.cat['z'] < zhigh))[0]
         # handle no sources in selection
         if len(ind_z) == 0:
             return None
