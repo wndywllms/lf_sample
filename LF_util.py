@@ -1,7 +1,6 @@
 import scipy as sp
 import pylab as pl
 import numpy as np
-import cosmolopy as cosmo
 import os
 import multiprocessing as mp
 import itertools
