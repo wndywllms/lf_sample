@@ -52,7 +52,13 @@ class rmsmapz(object):
 
     def vmin(self,zmin):
         # compute the Smolcic Ak*V_max(L,rms_k) sum
-        vm = cosmo.distance.comoving_volume(zmin, **default_cosmo)
+        degtost = 4.*180.**2./np.pi  # sq degrees to steradians  of full sky
+        domega = self.area/degtost
+        #DL = acosmo.luminosity_distance(zmin).value
+        #vc = (4.*np.pi/3.)*(DL/(1.+zmin))**3.  # volume at zlim
+        #vmax = domega*vc
+        #vm = cosmo.distance.comoving_volume(zmin, **default_cosmo)
+        vm = domega*acosmo.comoving_volume(zmin).value
         return np.sum(self.hist*vm)
     
     def interp_setup(self,Lmin,Lmax,factor,alpha=0.7,sampling=100):
@@ -75,12 +81,13 @@ class rmsmapz(object):
         #print np.log10(L/(rms*self.factor)), np.min(self.get_zmax_interp.x), np.max(self.get_zmax_interp.x)
         zlim=self.get_zmax_interp(np.log10(L/(rms*self.factor)))
 
-        #degtost = 4.*180.**2./np.pi  # sq degrees to steradians  of full sky
-        #domega = self.area/degtost
-        #DL = acosmo.luminosity_distance(zlim)/u.Mpc
+        degtost = 4.*180.**2./np.pi  # sq degrees to steradians  of full sky
+        domega = self.area/degtost
+        #DL = acosmo.luminosity_distance(zlim).value
         #vc = (4.*np.pi/3.)*(DL/(1.+zlim))**3.  # volume at zlim
         #vmax = domega*vc
-        vmax = cosmo.distance.comoving_volume(zlim, **default_cosmo)
+        vmax = domega*acosmo.comoving_volume(zlim).value
+        #vmax = cosmo.distance.comoving_volume(zlim, **default_cosmo)
         return vmax
     
     
@@ -116,43 +123,50 @@ kwargs
     alpha  - spectral index (default = 0.7)
     """
     # flux in Jy to Power in W/Hz
-    DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
+    #DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
+    DL = acosmo.luminosity_distance(z).value
     power = Flux*(4.*np.pi*DL**2.)*1.e-26*(3.08667758e22**2.)*(1. + z)**(-1.+alpha)
     return power
 
 
 def RadioFlux (power, z, alpha=0.7): 
     # function to calculate flux density given in Jy some radio power
-    DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
+    #DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
+    DL = acosmo.luminosity_distance(z).value
     S = 1e26* power / ( 4.*np.pi*DL**2*(3.08667758e22**2.)*(1. + z)**(-1.+alpha) )
     return S
 
 def OpticalLuminosity(Flux, z):
     # flux in W/Hz/m^2 to luminosity in W/Hz
-    DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
+    #DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
+    DL = acosmo.luminosity_distance(z).value
     luminosity = Flux*(4.*np.pi*DL**2.)*(3.08667758e22**2.)*(1. + z)
     return luminosity
 
 def OpticalLuminosity2(Flux, z, alpha):
     # flux in W/Hz/m^2 to luminosity in W/Hz
-    DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
+    #DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
+    DL = acosmo.luminosity_distance(z).value
     luminosity = Flux*(4.*np.pi*DL**2.)*(3.08667758e22**2.)*(1. + z)**(-1.+alpha)
     return luminosity
 
 def OpticalFlux (luminosity, z): 
     # function to calculate flux density given some optical luminosity
-    DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
+    #DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
+    DL = acosmo.luminosity_distance(z).value
     S = luminosity / ( 4.*np.pi*DL**2*(3.08667758e22**2.)*(1. + z) )
     return S
 
 def OpticalMag(mag, z):
-    dm = cosmo.magnitudes.distance_modulus(z, **default_cosmo)
+    #dm = cosmo.magnitudes.distance_modulus(z, **default_cosmo)
+    dm = acosmo.distmod(z).value
     Mag = mag - dm
     return Mag
 
 def XrayLuminosity(Flux, z):
     # flux in W/m^2 to luminosity in W
-    DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
+    #DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
+    DL = acosmo.luminosity_distance(z).value
     luminosity = Flux*(4.*np.pi*DL**2.)*(3.08667758e22**2.)  #*(1. + z) these are X-ray bolometric
     luminosity = luminosity*1e7  # W -> erg/s
     return luminosity
@@ -173,7 +187,8 @@ def zlim_func(x,m,z,mlim):
     function whose zero is the maximum z at which target with magnitude m can be observed given the magnitude limit mlim
     f(x) = mlim - DM(x) - m + DM(z)
     '''
-    f = mlim -m + cosmo.magnitudes.distance_modulus(z, **default_cosmo) - cosmo.magnitudes.distance_modulus(x, **default_cosmo)
+    #f = mlim -m + cosmo.magnitudes.distance_modulus(z, **default_cosmo) - cosmo.magnitudes.distance_modulus(x, **default_cosmo)
+    f = mlim -m +  acosmo.distmod(z).value -  acosmo.distmod(x).value
     #print mlim, m, cosmo.magnitudes.distance_modulus(z, **default_cosmo), cosmo.magnitudes.distance_modulus(x, **default_cosmo), x
     return f
     
@@ -207,7 +222,8 @@ def vmax(m,z,mlim,area):
     
     degtost = 4.*180.**2./np.pi  # sq degrees to steradians
     domega = area/degtost
-    DL = cosmo.distance.luminosity_distance(zlim, **default_cosmo)
+    #DL = cosmo.distance.luminosity_distance(zlim, **default_cosmo)
+    DL = acosmo.luminosity_distance(zlim).value
     vc = (4.*np.pi/3.)*(DL/(1+zlim))**3.  # volume at zlim
     vmax = domega*vc
     return vmax
@@ -231,7 +247,8 @@ def calc_stuff(i,args):
     elif stype == 'Optical':
         ft = OpticalFlux(L[i], zt)
     zm = np.interp(fluxlim2, ft, zt)
-    Vzmax = cosmo.distance.comoving_volume(zm, **default_cosmo)
+    #Vzmax = cosmo.distance.comoving_volume(zm, **default_cosmo)
+    Vzmax = acosmo.comoving_volume(zm).value
     return Vzmax
 
 
@@ -244,7 +261,8 @@ def calc_stuff_min(i,args):
         ft = OpticalFlux(L[i], zt)
     zm = np.interp(fluxlim2, ft, zt)
     #Vzmin[i] = zm
-    Vzmin = cosmo.distance.comoving_volume(zm, **default_cosmo)
+    #Vzmin = cosmo.distance.comoving_volume(zm, **default_cosmo)
+    Vzmin = acosmo.comoving_volume(zm).value
     return Vzmin
     
     
@@ -382,7 +400,7 @@ def get_Vzmin_old(z, L, fluxlim2, stype='Radio',filename='Vzmin.sav.npy', clobbe
                 ft = OpticalFlux(L[i], zt)
             zm = np.interp(fluxlim2, ft, zt)
             #Vzmin[i] = zm
-            Vzmin[i] = cosmo.distance.comoving_volume(zm, **default_cosmo)
+            Vzmin[i] = acosmo.comoving_volume(zm).value
             
         np.save(filename, (Vzmin))
     return Vzmin
@@ -532,8 +550,8 @@ def get_LF(pbins, power, zmin, zmax, area, ind=None, verbose=True):
             zmax_h = zmax[sel_ind]
             zmin_h = zmin[sel_ind]
             
-            vzmax = cosmo.distance.comoving_volume(zmax_h, **default_cosmo)
-            vzmin = cosmo.distance.comoving_volume(zmin_h, **default_cosmo)
+            vzmax = acosmo.comoving_volume(zmax_h).value
+            vzmin = acosmo.comoving_volume(zmin_h).value
             
             vi = (vzmax - vzmin)*(area/(4.*np.pi))
             rho[P_i]  =  np.sum(1./vi)      #sum of 1/v_max for each source
@@ -592,8 +610,8 @@ def get_rho_z(zbins, pbins, power, zmin, zmax, area, ind=None, verbose=True):
             zmax_h = zmax[sel_ind]
             zmin_h = zmin[sel_ind]
             
-            vzmax = cosmo.distance.comoving_volume(zmax_h, **default_cosmo)
-            vzmin = cosmo.distance.comoving_volume(zmin_h, **default_cosmo)
+            vzmax = acosmo.comoving_volume(zmax_h).value
+            vzmin = acosmo.comoving_volume(zmin_h).value
             
             vi = (vzmax - vzmin)*(area/(4.*np.pi))
             rho[P_i]  =  np.sum(1./vi)      #sum of 1/v_max for each source
@@ -648,8 +666,8 @@ def get_CLF(pbins, power, zmin, zmax, area, ind=None, verbose=True):
             zmax_h = zmax[sel_ind]
             zmin_h = zmin[sel_ind]
             
-            vzmax = cosmo.distance.comoving_volume(zmax_h, **default_cosmo)
-            vzmin = cosmo.distance.comoving_volume(zmin_h, **default_cosmo)
+            vzmax = acosmo.comoving_volume(zmax_h).value
+            vzmin = acosmo.comoving_volume(zmin_h).value
             
             vi = (vzmax - vzmin)*(area/(4.*np.pi))
             rho[P_i]  =  np.sum(1./vi)      #sum of 1/v_max for each source
@@ -725,8 +743,8 @@ def get_LF_f_areal(pbins_in, power, zmin, zmax, fcor, areal, area, ind=None, ver
             areal_h = areal[sel_ind]
             fcor_h = fcor[sel_ind]
             
-            vzmax = cosmo.distance.comoving_volume(zmax_h, **default_cosmo) ## Mpc^3
-            vzmin = cosmo.distance.comoving_volume(zmin_h, **default_cosmo)
+            vzmax = acosmo.comoving_volume(zmax_h).value ## Mpc^3
+            vzmin = acosmo.comoving_volume(zmin_h).value
             
             vi = (vzmax - vzmin)*(area/(4.*np.pi))  #area/4pi gives per sterad
             rho[P_i]  =  np.sum(fcor_h/(areal_h*vi))      #sum of 1/v_max for each source
@@ -888,8 +906,8 @@ def get_CLF_f_areal(pbins, power, zmin, zmax, fcor, areal, area, ind=None, verbo
             areal_h = areal[sel_ind]
             fcor_h = fcor[sel_ind]
             
-            vzmax = cosmo.distance.comoving_volume(zmax_h, **default_cosmo)
-            vzmin = cosmo.distance.comoving_volume(zmin_h, **default_cosmo)
+            vzmax = acosmo.comoving_volume(zmax_h).value
+            vzmin = acosmo.comoving_volume(zmin_h).value
             
             vi = (vzmax - vzmin)*(area/(4.*np.pi))  #area/4pi gives per sterad
             rho[P_i]  =  np.sum(fcor_h/(areal_h*vi))      #sum of 1/v_max for each source
@@ -949,8 +967,8 @@ def get_rho_Plim_f_areal(plimit, power, zmin, zmax, fcor, areal, area, ind=None,
         areal_h = areal[sel_ind]
         fcor_h = fcor[sel_ind]
         
-        vzmax = cosmo.distance.comoving_volume(zmax_h, **default_cosmo)
-        vzmin = cosmo.distance.comoving_volume(zmin_h, **default_cosmo)
+        vzmax = cosmo.comoving_volume(zmax_h).value
+        vzmin = cosmo.comoving_volume(zmin_h).value
         
         vi = (vzmax - vzmin)*(area/(4.*np.pi))  #area/4pi gives per sterad
         rho  =  np.sum(fcor_h/(areal_h*vi))      #sum of 1/v_max for each source
@@ -1238,7 +1256,7 @@ def get_best_lf_model(z=0, model='1a', scalef=150.):
     if delay:
 
         cosmo = LambdaCDM(H0=70, Om0=0.3, Ode0=0.7)
-        zt = z_at_value(cosmo.age, cosmo.age(z) - tau*u.Gyr)
+        zt = z_at_value(acosmo.age, acosmo.age(z) - tau*u.Gyr)
         
     else:
         zt = z
