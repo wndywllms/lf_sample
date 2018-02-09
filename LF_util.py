@@ -5,10 +5,6 @@ import os
 import multiprocessing as mp
 import itertools
 
-# LRT+ default
-#If no file is provided a cosmology of (Omega_Matter, Omega_Lambda, Omega_k, H0) = (0.3, 0.7, 0.0, 70.0) is assumed.
-default_cosmo = {'omega_M_0':0.3, 'omega_lambda_0':0.7, 'omega_k_0':0.0, 'h':0.70}
-
 import scipy.optimize as so
 from astropy.io import fits
 from scipy.interpolate import interp1d
@@ -293,7 +289,7 @@ def get_Vzmax(z, L, fluxlim2, stype='Radio',filename='Vzmax.sav.npy', clobber=Fa
 
     
     
-            pool = mp.Pool(8)
+            pool = mp.Pool(mp.cpu_count())
             Vzmax = np.array(pool.map(func_star, itertools.izip(range(Nsrc2), itertools.repeat([z,L,fluxlim2,stype]))))
             
         # handle the varying rms case
@@ -335,7 +331,7 @@ def func_star_zmax1():
     return
 
 
-def get_zmax_mp(z, L, fluxlim2, stype='Radio',filename='zmax.sav.npy', clobber=False, ncpu=8):
+def get_zmax_mp(z, L, fluxlim2, stype='Radio',filename='zmax.sav.npy', clobber=False):
     if os.path.isfile(filename) and (not clobber):
         print 'read zmax from '+filename
         zmax = np.load(filename)
@@ -345,7 +341,7 @@ def get_zmax_mp(z, L, fluxlim2, stype='Radio',filename='zmax.sav.npy', clobber=F
     Nsrc2 = len(z)
     if len(zmax) != len(z):
         print 'calculating zmax for '+filename
-        pool = mp.Pool(processes=ncpu)
+        pool = mp.Pool(mp.cpu_count())
         #results = [pool.apply_async(get_zmax1, args=(zi,Li,fluxlim2,stype)) for zi, Li in zip(z,L)]
         #zmax =  [p.get() for p in results]
         #zmax = np.array(zmax)
@@ -432,7 +428,7 @@ def get_Vzmin(z, L, fluxlim2, zmin=0, stype='Radio',filename='Vzmin.sav.npy', cl
                 ##Vzmin[i] = zm
                 #Vzmin[i] = cosmo.distance.comoving_volume(zm, **default_cosmo)
                 
-            pool = mp.Pool(8)
+            pool = mp.Pool(mp.cpu_count())
             Vzmax = np.array(pool.map(func_star_min, itertools.izip(range(Nsrc2), itertools.repeat([z,L,fluxlim2,stype]))))
                 
         # handle the varying rms case
@@ -472,7 +468,7 @@ def get_zmin1(zi, Li, fluxlim2, stype):
 
 
 
-def get_zmin_mp(z, L, fluxlim2, stype='Radio',filename='zmin.sav.npy', clobber=False, ncpu=8):
+def get_zmin_mp(z, L, fluxlim2, stype='Radio',filename='zmin.sav.npy', clobber=False):
     if os.path.isfile(filename) and (not clobber):
         print 'read zmin from '+filename
         zmin = np.load(filename)
@@ -482,7 +478,7 @@ def get_zmin_mp(z, L, fluxlim2, stype='Radio',filename='zmin.sav.npy', clobber=F
     Nsrc2 = len(z)
     if len(zmin) != len(z):
         print 'calculating zmin for '+filename
-        pool = mp.Pool(processes=ncpu)
+        pool = mp.Pool(mp.cpu_count())
         results = [pool.apply_async(get_zmin1, args=(zi,Li,fluxlim2,stype)) for zi, Li in zip(z,L)]
         zmin =  [p.get() for p in results]
         zmin = np.array(zmin)
