@@ -8,8 +8,12 @@ import matplotlib.pyplot as plt
 import os
 import sys
 
-import cosmolopy as cosmo
-default_cosmo = {'omega_M_0':0.3, 'omega_lambda_0':0.7, 'omega_k_0':0.0, 'h':0.70}
+#import cosmolopy as cosmo
+#default_cosmo = {'omega_M_0':0.3, 'omega_lambda_0':0.7, 'omega_k_0':0.0, 'h':0.70}
+
+from astropy.cosmology import FlatLambdaCDM
+import astropy.units as u
+acosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -155,8 +159,8 @@ class lf_sample:
         
         new_self.zlim_low = zlow
         new_self.zlim_high = zhigh
-        new_self.Vzlim_low = cosmo.distance.comoving_volume(zlow, **default_cosmo)
-        new_self.Vzlim_high = cosmo.distance.comoving_volume(zhigh, **default_cosmo)
+        new_self.Vzlim_low = acosmo.comoving_volume(zlow).value
+        new_self.Vzlim_high = acosmo.comoving_volume(zhigh).value
         
         new_self.set_power_z_limit()
         
@@ -414,7 +418,7 @@ class lf_sample:
         #np.savez('sample_{name}.npz'.format(name=self.name), z=self.cat['z'], sm=self.smass, P=self.power )
         
         
-        Vzlim_high = cosmo.distance.comoving_volume(self.zlim_high, **default_cosmo)
+        Vzlim_high = acosmo.comoving_volume(self.zlim_high).value
         if haspower:
             ### Combine Vzmax's from radio, optical and z selections
             Vzmax = Vzlim_high*np.ones(len(OptVzmax))
@@ -429,7 +433,7 @@ class lf_sample:
                 
                 
         ### Combine Vzmins's from optical and z selections
-        Vzlim_low = cosmo.distance.comoving_volume(self.zlim_low, **default_cosmo)
+        Vzlim_low = acosmo.comoving_volume(self.zlim_low).value
         Vzmin = Vzlim_low*np.ones(len(OptVzmin))
         if haspower:
             ### Combine Vzmin's from radio, optical and z selections
@@ -557,7 +561,7 @@ masscompleteness - mass(z) function describing the completeness envelope
         
         # zmax determined from mass-completeness also #
         SMzmax = masscompleteness(m=sm_complete_sample.cat['smass'])
-        VSMzmax = cosmo.distance.comoving_volume(SMzmax, **default_cosmo)
+        VSMzmax = acosmo.comoving_volume(SMzmax).value
         #sm_complete_sample.cat['Vzmax']=
         newVSMzmax = np.minimum(sm_complete_sample.cat['Vzmax'], VSMzmax)
         
