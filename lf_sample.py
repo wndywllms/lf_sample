@@ -63,8 +63,8 @@ class lf_sample:
         self.zlim_high = zhigh
         
         
-        Vzlow = cosmo.distance.comoving_volume(self.zlim_low, **default_cosmo)
-        Vzhigh = cosmo.distance.comoving_volume(self.zlim_high, **default_cosmo)
+        Vzlow = acosmo.comoving_volume(self.zlim_low).value
+        Vzhigh = acosmo.comoving_volume(self.zlim_high).value
         self.Vzlim_low = Vzlow
         self.Vzlim_high = Vzhigh
         
