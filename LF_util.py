@@ -289,7 +289,7 @@ def get_Vzmax(z, L, fluxlim2, stype='Radio',filename='Vzmax.sav.npy', clobber=Fa
 
     
     
-            pool = mp.Pool(mp.cpu_count())
+            pool = mp.Pool(np.min((16,mp.cpu_count())))
             Vzmax = np.array(pool.map(func_star, itertools.izip(range(Nsrc2), itertools.repeat([z,L,fluxlim2,stype]))))
             
         # handle the varying rms case
@@ -341,7 +341,7 @@ def get_zmax_mp(z, L, fluxlim2, stype='Radio',filename='zmax.sav.npy', clobber=F
     Nsrc2 = len(z)
     if len(zmax) != len(z):
         print 'calculating zmax for '+filename
-        pool = mp.Pool(mp.cpu_count())
+        pool = mp.Pool(np.min((16,mp.cpu_count())))
         #results = [pool.apply_async(get_zmax1, args=(zi,Li,fluxlim2,stype)) for zi, Li in zip(z,L)]
         #zmax =  [p.get() for p in results]
         #zmax = np.array(zmax)
@@ -428,7 +428,7 @@ def get_Vzmin(z, L, fluxlim2, zmin=0, stype='Radio',filename='Vzmin.sav.npy', cl
                 ##Vzmin[i] = zm
                 #Vzmin[i] = cosmo.distance.comoving_volume(zm, **default_cosmo)
                 
-            pool = mp.Pool(mp.cpu_count())
+            pool = mp.Pool(np.min((16,mp.cpu_count())))
             Vzmax = np.array(pool.map(func_star_min, itertools.izip(range(Nsrc2), itertools.repeat([z,L,fluxlim2,stype]))))
                 
         # handle the varying rms case
@@ -478,7 +478,7 @@ def get_zmin_mp(z, L, fluxlim2, stype='Radio',filename='zmin.sav.npy', clobber=F
     Nsrc2 = len(z)
     if len(zmin) != len(z):
         print 'calculating zmin for '+filename
-        pool = mp.Pool(mp.cpu_count())
+        pool = mp.Pool(np.min((16,mp.cpu_count())))
         results = [pool.apply_async(get_zmin1, args=(zi,Li,fluxlim2,stype)) for zi, Li in zip(z,L)]
         zmin =  [p.get() for p in results]
         zmin = np.array(zmin)
