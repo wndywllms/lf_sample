@@ -155,6 +155,30 @@ class lf_sample:
         return lf_sample(name, cat, zlow=self.zlim_low, zhigh=self.zlim_high, radio_fluxlim_faint = self.radio_fluxlim_faint, opt_fluxlim_faint=self.opt_fluxlim_faint, opt_fluxlim_bright=self.opt_fluxlim_bright, domega=self.domega, rmsmap=self.rmsmap, completeness=self.completeness)
     
     
+    def make_z_samples(self, zbins, dolf=True, savelf=True, plot=False, forcecalc=False):
+        z_samples = []
+        for i in range(len(zbins)):
+            print zbins[i][0], zbins[i][1]
+            z_sample_i = self.sub_z_sample('zbin{i:02d}'.format(i=i), zbins[i][0], zbins[i][1], forcecalc=forcecalc, savefiles=True)
+
+            if plot:
+                z_sample_i.plot_Vzmin_Vzmax(keep=True)
+                z_sample_i.plot_Vzmin_Vzmax(keep=True, ccol='opt_mag', cbarlabel='$r$', saveext='rmag')
+                z_sample_i.plot_Vzmin_Vzmax(keep=True, ccol='opt_col', cbarlabel='$g-r$', saveext='col')
+
+            if z_sample_i is not None:
+                if dolf:
+                    z_sample_i.compute_LF(pbins)
+                    if savelf:
+                        np.savez('LF_samples/{n:s}.npz'.format(n=z_sample_i.name),x=z_sample_i.LF_x, xerr=z_sample_i.LF_xerr, N=z_sample_i.LF_num,  y=z_sample_i.LF_rho, yerrup=z_sample_i.LF_rhoerrup, yerrlow=z_sample_i.LF_rhoerrlow)
+
+                
+                
+            z_samples.append(z_sample_i)
+        
+        return z_samples
+    
+    
     def sub_z_sample(self, name, zlow, zhigh,forcecalc=False, savefiles=True, plot=False):
         ''' make a new subsample with name 'name' from the z range provided'''
         
