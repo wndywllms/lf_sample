@@ -444,7 +444,7 @@ class lf_sample:
     
     def set_power_z_limit(self):
         zz = np.linspace(self.zlim_low, self.zlim_high, 10)
-        Plim = np.log10(LF_util.RadioPower(self.radio_fluxlim_faint, zz, alpha=-0.8)) 
+        Plim = np.log10(LF_util.RadioPower(self.radio_fluxlim_faint, zz, alpha=-0.7)) 
         self.power_z_limit = np.vstack((zz, Plim))
         return
     
