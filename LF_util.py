@@ -25,6 +25,10 @@ class completenessf(object):
         #print flux, np.min(self.C_flux_interp.x), np.max(self.C_flux_interp.x)
         return self.C_flux_interp(flux)
 
+def mp_vax(arg, **kwarg):
+    return rmsmap.vmax(*arg, **kwarg)
+    
+
 class rmsmapz(object):
     def __init__(self,map,sampling=100):
         # map is a 2D nan-blanked FITS array as produced by PyBDSF
@@ -39,32 +43,35 @@ class rmsmapz(object):
         cdata=self.data[~np.isnan(self.data)]
         self.hist=np.asfarray(np.histogram(cdata,self.bins)[0])/len(cdata)
         self.area=len(cdata)*hdu[0].header['CDELT1']**2.0 # in sq. deg
-        print 'Read',map,'area is',self.area,'deg^2'
+        
+        degtost = (180./np.pi)**2.  # sq degrees to steradians 
+        self.area_sr= self.area/degtost
+        self.domega=self.area_sr / (4.*np.pi)
+        print 'Read',map,'area is {:.3f} deg^2'.format(self.area)
+        print 'Read',map,'area is {:.3f} percent of sky'.format(self.domega)
 
     def vmax(self,L):
         # compute the Smolcic Ak*V_max(L,rms_k) sum
-        vm=self.get_vmax(L,self.centres)
+        vm = self.domega*self.get_vmax(L,self.centres)
         return np.sum(self.hist*vm)
 
     def vmin(self,zmin):
         # compute the Smolcic Ak*V_max(L,rms_k) sum
-        degtost = 4.*180.**2./np.pi  # sq degrees to steradians  of full sky
-        domega = self.area/degtost
         #DL = acosmo.luminosity_distance(zmin).value
         #vc = (4.*np.pi/3.)*(DL/(1.+zmin))**3.  # volume at zlim
         #vmax = domega*vc
         #vm = cosmo.distance.comoving_volume(zmin, **default_cosmo)
-        vm = domega*acosmo.comoving_volume(zmin).value
+        vm = self.domega*acosmo.comoving_volume(zmin).value
         return np.sum(self.hist*vm)
     
-    def interp_setup(self,Lmin,Lmax,factor,alpha=0.7,sampling=100):
+    def interp_setup(self,Lmin,Lmax,factor,alpha=-0.7):
         # we solve in terms of r = L/(factor*rms)
         self.factor=factor
         self.alpha=alpha
         rmin=Lmin/(factor*self.max)
         rmax=Lmax/(factor*self.min)
-        print 'Using r range',rmin,'to',rmax
-        rvals=np.linspace(np.log10(rmin),np.log10(rmax),sampling)
+        print 'Using r range {:.2e} to {:.2e}'.format(rmin,rmax)
+        rvals=np.linspace(np.log10(rmin),np.log10(rmax),self.sampling)
         zvals=np.zeros_like(rvals)
         for i in range(len(rvals)):
             #print i,rvals[i]
@@ -77,12 +84,10 @@ class rmsmapz(object):
         #print np.log10(L/(rms*self.factor)), np.min(self.get_zmax_interp.x), np.max(self.get_zmax_interp.x)
         zlim=self.get_zmax_interp(np.log10(L/(rms*self.factor)))
 
-        degtost = 4.*180.**2./np.pi  # sq degrees to steradians  of full sky
-        domega = self.area/degtost
         #DL = acosmo.luminosity_distance(zlim).value
         #vc = (4.*np.pi/3.)*(DL/(1.+zlim))**3.  # volume at zlim
         #vmax = domega*vc
-        vmax = domega*acosmo.comoving_volume(zlim).value
+        vmax = acosmo.comoving_volume(zlim).value
         #vmax = cosmo.distance.comoving_volume(zlim, **default_cosmo)
         return vmax
     
@@ -100,58 +105,74 @@ class rmsz(rmsmapz):
         
         self.centres = rms['centres']
         self.hist = rms['hist']
-        self.area = rms['area']
+        self.area = float(rms['area'])
         self.max = rms['dmax']
         self.min = rms['dmin']
         
-        #self.hist=np.asfarray(np.histogram(cdata,self.bins)[0])/len(cdata)
-        #self.area=len(cdata)*hdu[0].header['CDELT1']**2.0 # in sq. deg
-        print 'Read',npyfile,'area is',self.area,'deg^2'
+        degtost = (180./np.pi)**2.  # sq degrees to steradians 
+        self.area_sr= self.area/degtost
+        self.domega=self.area_sr / (4.*np.pi)
+        print self.area
+        print type(self.area)
+        print 'Read',npyfile,'area is {:.2f} deg^2'.format(self.area)
+        print 'Read',npyfile,'area is {:.2f} percent of sky'.format(100*self.domega)
+        
         return
 
 
-def RadioPower(Flux, z, alpha=0.7):
-    """RadioPower(Flux, z, alpha=0.7)
+def RadioPower(Flux, z, alpha=-0.7):
+    """RadioPower(Flux, z, alpha=-0.7)
 args
     Flux - in Jy
     z - redshift 
 kwargs
-    alpha  - spectral index (default = 0.7)
+    alpha  - spectral index (default = -0.7) defined in the sensee S \propto nu^alpha
     """
     # flux in Jy to Power in W/Hz
     #DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
-    DL = acosmo.luminosity_distance(z).value
-    power = Flux*(4.*np.pi*DL**2.)*1.e-26*(3.08667758e22**2.)*(1. + z)**(-1.+alpha)
+    DL = acosmo.luminosity_distance(z).value   # in Mpc
+    A = (4.*np.pi*(DL*3.08667758e22)**2.)      # in SI (m^2)
+    S = Flux*1.e-26                            # kg /s^2
+    power = (S*A) / ((1. + z)**(1.+alpha))
     return power
 
 
-def RadioFlux (power, z, alpha=0.7): 
+def RadioFlux (power, z, alpha=-0.7): 
     # function to calculate flux density given in Jy some radio power
     #DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
     DL = acosmo.luminosity_distance(z).value
-    S = 1e26* power / ( 4.*np.pi*DL**2*(3.08667758e22**2.)*(1. + z)**(-1.+alpha) )
+    A = (4.*np.pi*(DL*3.08667758e22)**2.)      # in SI (m^2)
+    Flux = (power  / A) *((1. + z)**(1.+alpha) )
+    S = 1e26* Flux   # in Jy
     return S
 
 def OpticalLuminosity(Flux, z):
     # flux in W/Hz/m^2 to luminosity in W/Hz
     #DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
+    S = Flux*1.e-26                            # kg /s^2
     DL = acosmo.luminosity_distance(z).value
-    luminosity = Flux*(4.*np.pi*DL**2.)*(3.08667758e22**2.)*(1. + z)
-    return luminosity
-
-def OpticalLuminosity2(Flux, z, alpha):
-    # flux in W/Hz/m^2 to luminosity in W/Hz
-    #DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
-    DL = acosmo.luminosity_distance(z).value
-    luminosity = Flux*(4.*np.pi*DL**2.)*(3.08667758e22**2.)*(1. + z)**(-1.+alpha)
+    A = (4.*np.pi*(DL*3.08667758e22)**2.)      # in SI (m^2)
+    luminosity = S*A*(1. + z)
     return luminosity
 
 def OpticalFlux (luminosity, z): 
     # function to calculate flux density given some optical luminosity
     #DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
     DL = acosmo.luminosity_distance(z).value
-    S = luminosity / ( 4.*np.pi*DL**2*(3.08667758e22**2.)*(1. + z) )
-    return S
+    A = (4.*np.pi*(DL*3.08667758e22)**2.)      # in SI (m^2)
+    S = luminosity / ( A*(1. + z) )
+    Flux = S*1e26                  # to Jy
+    return Flux
+
+
+def OpticalLuminosity2(Flux, z, alpha):
+    # flux in W/Hz/m^2 to luminosity in W/Hz
+    #DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
+    DL = acosmo.luminosity_distance(z).value
+    A = (4.*np.pi*(DL*3.08667758e22)**2.)      # in SI (m^2)
+    luminosity = Flux*A*(1. + z)**(1.+alpha)
+    return luminosity
+
 
 def OpticalMag(mag, z):
     #dm = cosmo.magnitudes.distance_modulus(z, **default_cosmo)
@@ -262,7 +283,7 @@ def calc_stuff_min(i,args):
     return Vzmin
     
     
-def get_Vzmax(z, L, fluxlim2, stype='Radio',filename='Vzmax.sav.npy', clobber=False, rmsmap=None, completeness=None, verbose=False, savefile=True):
+def get_Vzmax(z, L, fluxlim2, domega, stype='Radio',filename='Vzmax.sav.npy', clobber=False, rmsmap=None, completeness=None, verbose=False, savefile=True):
     
     
     if os.path.isfile(filename) and (not clobber):
@@ -291,6 +312,7 @@ def get_Vzmax(z, L, fluxlim2, stype='Radio',filename='Vzmax.sav.npy', clobber=Fa
     
             pool = mp.Pool(np.min((16,mp.cpu_count())))
             Vzmax = np.array(pool.map(func_star, itertools.izip(range(Nsrc2), itertools.repeat([z,L,fluxlim2,stype]))))
+            Vzmax = domega*Vzmax
             
         # handle the varying rms case
         else:
@@ -299,6 +321,10 @@ def get_Vzmax(z, L, fluxlim2, stype='Radio',filename='Vzmax.sav.npy', clobber=Fa
                 sys.exit(1)
             for i in range( 0, Nsrc2):
                 Vzmax[i] = rmsmap.vmax(L[i])
+                #print 'test pool1'
+                #pool = mp.Pool(np.min((16,mp.cpu_count())))
+                #Vzmax = np.array(pool.map(mp_vax, itertools.izip(itertools.repeat(rmsmap), L)   ))
+                
         if (completeness is not None) and (stype=='Radio'):
             if not isinstance(completeness, completenessf):
                 print "ERROR, completeness instance not initialised/passed properly"
@@ -403,7 +429,7 @@ def get_Vzmin_old(z, L, fluxlim2, stype='Radio',filename='Vzmin.sav.npy', clobbe
 
 
 
-def get_Vzmin(z, L, fluxlim2, zmin=0, stype='Radio',filename='Vzmin.sav.npy', clobber=False, rmsmap=None, completeness=None, verbose=False, savefile=True):
+def get_Vzmin(z, L, fluxlim2, domega, zmin=0, stype='Radio',filename='Vzmin.sav.npy', clobber=False, rmsmap=None, completeness=None, verbose=False, savefile=True):
     
     if os.path.isfile(filename) and (not clobber):
         print 'read Vzmin from '+filename
@@ -429,7 +455,8 @@ def get_Vzmin(z, L, fluxlim2, zmin=0, stype='Radio',filename='Vzmin.sav.npy', cl
                 #Vzmin[i] = cosmo.distance.comoving_volume(zm, **default_cosmo)
                 
             pool = mp.Pool(np.min((16,mp.cpu_count())))
-            Vzmax = np.array(pool.map(func_star_min, itertools.izip(range(Nsrc2), itertools.repeat([z,L,fluxlim2,stype]))))
+            Vzmin = np.array(pool.map(func_star_min, itertools.izip(range(Nsrc2), itertools.repeat([z,L,fluxlim2,stype]))))
+            Vzmin = domega*Vzmin
                 
         # handle the varying rms case
         else:
@@ -762,15 +789,14 @@ def get_LF_f_areal(pbins_in, power, zmin, zmax, fcor, areal, area, ind=None, ver
     return rho, rhoerr, num
 
 
-def get_LF_rms_f_areal(pbins_in, power, Vzmin, Vzmax, fcor, areal, area, ind=None, verbose=True, xstr="P", ignoreMinPower=False):
+def get_LF_rms_f_areal(pbins_in, power, Vzmin, Vzmax, fcor, areal, ind=None, verbose=True, xstr="P", ignoreMinPower=False):
     '''
     pbins - bins of power (giving bin boundaries)
     power - log10(power) values
-    Vzmin - for each source minimum Vz it could be observed (taking into account all selections)
+    Vzmin - for each source minimum Vz it could be observed (taking into account all selections)  -- actual area, (i.e. fraction of full sky)
     Vzmax - for each source maximum Vz it could be observed
     fcor - correction factor for completeness
     areal - the fractional areal coverage per source
-    area - of survey in steradians
     ind - optically specify a selection index
     
     The differential comoving volume element dV_c/dz/dSolidAngle.
@@ -826,7 +852,7 @@ def get_LF_rms_f_areal(pbins_in, power, Vzmin, Vzmax, fcor, areal, area, ind=Non
             #vzmin = cosmo.distance.comoving_volume(zmin_h, **default_cosmo)
             
             #vi = (Vzmax_h - Vzmin_h)*(area/(4.*np.pi))  #area/4pi gives per sterad
-            vi = (Vzmax_h - Vzmin_h)*(area/(4.*np.pi))  #area/4pi gives per sterad
+            vi = (Vzmax_h - Vzmin_h) #*(domega/(4.*np.pi))  #area/4pi gives per sterad
             vi[vi <= 0] = np.nan
             rho[P_i]  =  np.nansum(fcor_h/(areal_h*vi))      #sum of 1/v_max for each source
             #rhoerr[P_i] =  rho[P_i]*np.sqrt(float(len(sel_ind)))/float(len(sel_ind))
@@ -836,9 +862,10 @@ def get_LF_rms_f_areal(pbins_in, power, Vzmin, Vzmax, fcor, areal, area, ind=Non
             #print vzmin.min(), vzmin.max()#, vzmin
             #print vi.min(), vi.max()#, vzmin
             #print np.sum(1./vi)#, vzmin
-            if np.isnan(rho[P_i]):
-                print num
-                print vi
+            #if np.isnan(rho[P_i]):
+                #print 'Num is nan:', num[P_i]
+                #print Vzmax_h
+                #print Vzmin_h
         if verbose:
             print "{p1:7.2f} < {x} <= {p2:6.2f} ({n:.0f}) : {rho:6.2e} +/- {rhoerr:6.2e}".format(x=xstr, p1=pbins[P_i], p2=pbins[P_i + 1], rho=rho[P_i]/dp[P_i], rhoerr=rhoerr[P_i]/dp[P_i], n=num[P_i])
             
@@ -852,7 +879,7 @@ def get_LF_rms_f_areal(pbins_in, power, Vzmin, Vzmax, fcor, areal, area, ind=Non
     return rho, rhoerr, num
 
 
-def get_CLF_f_areal(pbins, power, zmin, zmax, fcor, areal, area, ind=None, verbose=True, xstr="P"):
+def get_CLF_f_areal(pbins, power, zmin, zmax, fcor, areal, domega, ind=None, verbose=True, xstr="P"):
     '''
     pbins - bins of power (giving bin boundaries)
     power - log10(power) values
@@ -860,7 +887,7 @@ def get_CLF_f_areal(pbins, power, zmin, zmax, fcor, areal, area, ind=None, verbo
     zmax - for each source maximum z it could be observed
     fcor - correction factor for completeness
     areal - the fractional areal coverage per source
-    area - of survey in steradians
+    domega - of survey in steradians
     ind - optically specify a selection index
     
     The differential comoving volume element dV_c/dz/dSolidAngle.
@@ -905,7 +932,7 @@ def get_CLF_f_areal(pbins, power, zmin, zmax, fcor, areal, area, ind=None, verbo
             vzmax = acosmo.comoving_volume(zmax_h).value
             vzmin = acosmo.comoving_volume(zmin_h).value
             
-            vi = (vzmax - vzmin)*(area/(4.*np.pi))  #area/4pi gives per sterad
+            vi = (vzmax - vzmin)*(domega/(4.*np.pi))  #area/4pi gives per sterad
             rho[P_i]  =  np.sum(fcor_h/(areal_h*vi))      #sum of 1/v_max for each source
             #rhoerr[P_i] =  rho[P_i]*np.sqrt(float(len(sel_ind)))/float(len(sel_ind))
             rhoerr[P_i] = np.sqrt(np.sum((fcor_h/(areal_h*vi))**2.))
@@ -920,7 +947,7 @@ def get_CLF_f_areal(pbins, power, zmin, zmax, fcor, areal, area, ind=None, verbo
     return rho, rhoerr, num
 
 
-def get_rho_Plim_f_areal(plimit, power, zmin, zmax, fcor, areal, area, ind=None, verbose=True, xstr="P"):
+def get_rho_Plim_f_areal(plimit, power, zmin, zmax, fcor, areal, domega, ind=None, verbose=True, xstr="P"):
     '''
     plimit - bins of power (giving bin boundaries)
     power - log10(power) values
@@ -928,7 +955,7 @@ def get_rho_Plim_f_areal(plimit, power, zmin, zmax, fcor, areal, area, ind=None,
     zmax - for each source maximum z it could be observed
     fcor - correction factor for completeness
     areal - the fractional areal coverage per source
-    area - of survey in steradians
+    domega - of survey in steradians
     ind - optically specify a selection index
     
     The differential comoving volume element dV_c/dz/dSolidAngle.
@@ -966,7 +993,7 @@ def get_rho_Plim_f_areal(plimit, power, zmin, zmax, fcor, areal, area, ind=None,
         vzmax = cosmo.comoving_volume(zmax_h).value
         vzmin = cosmo.comoving_volume(zmin_h).value
         
-        vi = (vzmax - vzmin)*(area/(4.*np.pi))  #area/4pi gives per sterad
+        vi = (vzmax - vzmin)*(domega/(4.*np.pi))  #area/4pi gives per sterad
         rho  =  np.sum(fcor_h/(areal_h*vi))      #sum of 1/v_max for each source
         #rhoerr[P_i] =  rho[P_i]*np.sqrt(float(len(sel_ind)))/float(len(sel_ind))
         rhoerr = np.sqrt(np.sum((fcor_h/(areal_h*vi))**2.))
