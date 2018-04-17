@@ -1,15 +1,11 @@
 import pyfits as pf
 from utils.fits_util import *
 from astropy.table import Table, Column
-#from LF_util import *
 import LF_util
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 import sys
-
-#import cosmolopy as cosmo
-#default_cosmo = {'omega_M_0':0.3, 'omega_lambda_0':0.7, 'omega_k_0':0.0, 'h':0.70}
 
 from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
@@ -18,39 +14,6 @@ acosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 import warnings
 warnings.filterwarnings("ignore")
 
-#from cosmos_sample_util import *
-#from sdss_sample_util import *
-#from lf_by_mass_util import *
-
-
-#If no file is provided a cosmology of (Omega_Matter, Omega_Lambda, Omega_k, H0) = (0.3, 0.7, 0.0, 70.0) is assumed.
-#default_cosmo = {'omega_M_0':0.3, 'omega_lambda_0':0.7, 'omega_k_0':0.0, 'h':0.70}
-#default_cosmo = {'omega_M_0':0.3, 'omega_lambda_0':0.7, 'h':0.70}
-#cosmo.distance.set_omega_k_0(default_cosmo)
-
-#print "NB: have you run sdss_BH_rlf.py?"
-
-#name2 = 'COSMOS'
-
-
-### selections on full sample ###
-
-#define samples
-#sampleA = {'name': "1", 'zlim_low': , 'zlim_high':  }
-
-
-
-
-
-
-
-#class lf:
-    #pass
-    
-    
-
-#class lf_subsample(lf_sample):
-    #pass
 
 class lf_sample:
   
@@ -58,7 +21,6 @@ class lf_sample:
     def __init__(self, name, cat, zlow=0, zhigh=20, radio_fluxlim_faint=np.nan, opt_fluxlim_faint=np.nan, opt_fluxlim_bright=np.nan, domega=np.nan, area=np.nan, rmsmap=None, completeness=None):
         
         
-        #import pdb ; pdb.set_trace()
         self.name = name
         self.zlim_low = zlow
         self.zlim_high = zhigh
@@ -243,46 +205,6 @@ class lf_sample:
         
         return new_self
     
-    #def load_cat(self, cat, fluxunit='mJy'):
-        
-        ## subsample #
-
-        #cat = cat.copy()
-
-
-
-        #self.zz = cat.z
-        
-        #fKmag = cat.Ks_tot   # in fluxes in cat
-        ##fKmag2 = 3631.*10.**(-0.4*Kmag2)    # AB mag
-        #self.Klum = OpticalLuminosity(fKmag, zz)
-        
-        #scaleflux = 1.
-        #if fluxunit == 'mJy':
-            #scaleflux = 1e-3
-        #elif fluxunit == 'Jy':
-            #scaleflux = 1.
-            
-        #self.ff = (cat.Si_1_4_)*scaleflux   #in Jy
-        #self.power = np.log10(RadioPower(self.ff, self.zz, alpha=0.8))  # assumed spec ind
-
-        #self.Fcor = np.ones(len(ff))
-        #self.areal = get_area_for_flux(ff)
-
-        ## stellar masses
-        #self.smass = cat_vlacosmos.lmass
-
-
-        #self.Nsrc = len(zz)
-        
-        #vals = func()
-        
-        #self.z = vals['z']
-        #self.optical_flux = vals['optical_flux']
-        #self.optical_flux = vals['optical_flux']
-        #self.Nsrc =  
-        
-        #return
     
     def plot_zmin_zmax(self):
         
@@ -690,14 +612,3 @@ masscompleteness - mass(z) function describing the completeness envelope
     
         
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-  
