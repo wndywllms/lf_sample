@@ -156,6 +156,9 @@ class lf_sample:
     
     
     def make_z_samples(self, zbins, dolf=True, savelf=True, plot=False, forcecalc=False):
+        '''make_z_samples(self, zbins, dolf=True, savelf=True, plot=False, forcecalc=False)
+        make a set of samples over redshift bins
+        '''
         z_samples = []
         for i in range(len(zbins)):
             print zbins[i][0], zbins[i][1]
