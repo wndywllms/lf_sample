@@ -1080,6 +1080,8 @@ def sum_in_bins(xbins,xdata, ydata, norm=False):
 
 
 
+##### LF's from the literature #####
+
 def get_novak_lf_model(z=0, scalef=150.):
     dlogLrange = 0.1
     lLrange = np.arange(20, 28.5, dlogLrange)
