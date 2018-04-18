@@ -112,8 +112,6 @@ class rmsz(rmsmapz):
         degtost = (180./np.pi)**2.  # sq degrees to steradians 
         self.area_sr= self.area/degtost
         self.domega=self.area_sr / (4.*np.pi)
-        print self.area
-        print type(self.area)
         print 'Read',npyfile,'area is {:.2f} deg^2'.format(self.area)
         print 'Read',npyfile,'area is {:.2f} percent of sky'.format(100*self.domega)
         
