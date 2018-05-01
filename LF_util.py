@@ -6,8 +6,9 @@ import multiprocessing as mp
 import itertools
 
 import scipy.optimize as so
-from astropy.io import fits
 from scipy.interpolate import interp1d
+from astropy.table import Table
+from astropy.io import fits
 from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
 acosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -1110,11 +1111,169 @@ def get_novak_lf_model(z=0, scalef=150.):
     return lLrange150, rho
 
 
+
+def get_BH(ttype='all', f=150.):
+    # load Best & Heckman LF
+    BHLF = Table.read('/local/wwilliams/herts_projects/bootes_RLF/LFs/bestheckmanLF.fits')
+    logPlow = BHLF['Plow']
+    logPhigh = BHLF['Phigh']
+    logp_BH = (logPlow+logPhigh)/2.
+
+    # scale to 150 MHz
+    if f == 150.:
+        alpha = -0.7
+        logp_BH = logp_BH + alpha*np.log10(150./1400)
+        
+
+    if ttype == 'all':
+        log_rho_BH = BHLF['A_log_rho']
+        log_rho_BH_erru = BHLF['A_err_up']
+        log_rho_BH_errl = BHLF['A_err_low']
+    elif ttype == 'lerg':
+        log_rho_BH = BHLF['L_log_rho']
+        log_rho_BH_erru = BHLF['L_err_up']
+        log_rho_BH_errl = BHLF['L_err_low']
+    elif ttype == 'herg':
+        log_rho_BH = BHLF['H_log_rho']
+        log_rho_BH_erru = BHLF['H_err_up']
+        log_rho_BH_errl = BHLF['H_err_low']
+    elif ttype == 'agn':
+        log_rho_BH = BHLF['AGN_log_rho']
+        log_rho_BH_erru = BHLF['AGN_err_up']
+        log_rho_BH_errl = BHLF['AGN_err_low']
+    elif ttype == 'sf':
+        log_rho_BH = BHLF['SF_log_rho']
+        log_rho_BH_erru = BHLF['SF_err_up']
+        log_rho_BH_errl = BHLF['SF_err_low']
+    else:
+        raise Exception('ttype not handled')
+
+    x = logp_BH
+    y = 10**log_rho_BH
+    yerru = 10**(log_rho_BH+log_rho_BH_erru) - 10**(log_rho_BH)
+    yerrl = 10**(log_rho_BH) - 10**(log_rho_BH-log_rho_BH_errl)
+    
+    return x, y, np.array([yerru,yerrl])
+
+def get_MS(ttype='agn', f=150.):
+    if ttype == 'agn':
+        ff = '/local/wwilliams/herts_projects/bootes_RLF/LFs/ms-agn.txt'
+    elif ttype =='sf':
+        ff = '/local/wwilliams/herts_projects/bootes_RLF/LFs/ms-sf.txt'
+        
+    elif ttype == 'all':
+        xA, yA, yerrA = get_MS(ttype='agn', f=f)
+        xS, yS, yerrS = get_MS(ttype='sf', f=f)
+        
+        x = np.unique(np.hstack((xA,xS)))
+        y = np.nan*np.ones_like(x)
+        yerr = np.nan*np.ones((2,len(x)))
+        for i,xx in enumerate(x):
+            iA = np.where(xA == xx)[0]
+            iS = np.where(xS == xx)[0]
+            # must be both!!
+            if len(iA) ==1 and len(iS) == 1:
+                y[i] = yA[iA[0]] + yS[iS[0]]
+                yerr[0][i] = yerrA[0][iA[0]] + yerrS[0][iS[0]]
+                yerr[1][i] = yerrA[1][iA[0]] + yerrS[1][iS[0]]
+        return x, y, yerr
+                
+        
+    t = np.genfromtxt(ff, dtype=[('x','f8'),('y','e'),('yerru','e'),('yerrl','e')])
+    
+    
+    
+    x = t['x']
+    
+    
+    # scale to 150 MHz
+    if f == 150.:
+        alpha = -0.7
+        x = x + alpha*np.log10(150./1400)
+    
+    y = 2.5*10**t['y']
+    yerru = 2.5*(10**(t['y']+t['yerru']) - 10**(t['y']))
+    yerrl = 2.5*(10**(t['y']) - 10**(t['y']-t['yerrl']))
+    
+    return x, y, np.array([yerru,yerrl])
+
+
+def get_P(ttype='agn', f=150.):
+    if ttype == 'agn':
+        ff = '/local/wwilliams/herts_projects/bootes_RLF/LFs/prescott-agn.txt'
+    elif ttype =='sf':
+        ff = '/local/wwilliams/herts_projects/bootes_RLF/LFs/prescott-sf.txt'
+    elif ttype == 'all':
+        xA, yA, yerrA = get_P(ttype='agn', f=f)
+        xS, yS, yerrS = get_P(ttype='sf', f=f)
+        
+        x = np.unique(np.hstack((xA,xS)))
+        y = np.nan*np.ones_like(x)
+        yerr = np.nan*np.ones((2,len(x)))
+        for i,xx in enumerate(x):
+            iA = np.where(xA == xx)[0]
+            iS = np.where(xS == xx)[0]
+            # must be both!!
+            if len(iA) ==1 and len(iS) == 1:
+                y[i] = yA[iA[0]] + yS[iS[0]]
+                yerr[0][i] = yerrA[0][iA[0]] + yerrS[0][iS[0]]
+                yerr[1][i] = yerrA[1][iA[0]] + yerrS[1][iS[0]]
+        return x, y, yerr
+    
+    t = np.genfromtxt(ff, dtype=[('x','f8'),('y','e'),('yerrl','e'),('yerru','e')])
+    
+    x = t['x']
+    
+    
+    # scale to 150 MHz
+    if f == 150.:
+        alpha = -0.7
+        x = x + alpha*np.log10(150./325)
+    
+    y = 2.5*t['y']
+    yerru = 2.5*t['yerru']
+    yerrl = 2.5*t['yerrl']
+    
+    return x, y, np.array([yerru,yerrl])
+
+
+def get_mjh(ttype='agn'):
+    if ttype == 'agn':
+        f = '/local/wwilliams/herts_projects/bootes_RLF/LFs/lofar-agn.txt'
+    elif ttype =='sf':
+        f = '/local/wwilliams/herts_projects/bootes_RLF/LFs/lofar-sf.txt'
+    elif ttype == 'all':
+        xA, yA, yerrA = get_mjh(ttype='agn')
+        xS, yS, yerrS = get_mjh(ttype='sf')
+        
+        x = np.unique(np.hstack((xA,xS)))
+        y = np.nan*np.ones_like(x)
+        yerr = np.nan*np.ones((2,len(x)))
+        for i,xx in enumerate(x):
+            iA = np.where(xA == xx)[0]
+            iS = np.where(xS == xx)[0]
+            # must be both!!
+            if len(iA) ==1 and len(iS) == 1:
+                y[i] = yA[iA[0]] + yS[iS[0]]
+                yerr[0][i] = yerrA[0][iA[0]] + yerrS[0][iS[0]]
+                yerr[1][i] = yerrA[1][iA[0]] + yerrS[1][iS[0]]
+        return x, y, yerr
+    
+    t = np.genfromtxt(f, dtype=[('x','f8'),('y','e'),('yerr','e')])
+    
+    
+    x = t['x']
+    y = 2.5*t['y']
+    yerru = 2.5*t['yerr']
+    yerrl = 2.5*t['yerr']
+    
+    return x, y, np.array([yerru,yerrl])
+
+
 def get_pracy_LF(ttype='all', f=150.):
     # load Best & Heckman LF
-    from utils.fits_util import load_fits
-    PLF = load_fits('/local/wwilliams/herts_projects/bootes_RLF/LFs/pracy.fits')
-    logp_P = PLF.P
+    PLF = Table.read('/local/wwilliams/herts_projects/bootes_RLF/LFs/pracy.fits')
+    logp_P = PLF['P']
 
     # scale to 150 MHz
     if f == 150.:
@@ -1123,25 +1282,25 @@ def get_pracy_LF(ttype='all', f=150.):
         
 
     if ttype == 'all':
-        log_rho_P = PLF.All_rho
-        log_rho_P_erru = PLF.All_rhoerrup
-        log_rho_P_errl = PLF.All_rhoerrlow
+        log_rho_P = PLF['All_rho']
+        log_rho_P_erru = PLF['All_rhoerrup']
+        log_rho_P_errl = PLF['All_rhoerrlow']
     elif ttype == 'lerg':
-        log_rho_P = PLF.LERG_rho
-        log_rho_P_erru = PLF.LERG_rhoerrup
-        log_rho_P_errl = PLF.LERG_rhoerrlow
+        log_rho_P = PLF['LERG_rho']
+        log_rho_P_erru = PLF['LERG_rhoerrup']
+        log_rho_P_errl = PLF['LERG_rhoerrlow']
     elif ttype == 'herg':
-        log_rho_P = PLF.HERG_rho
-        log_rho_P_erru = PLF.HERG_rhoerrup
-        log_rho_P_errl = PLF.HERG_rhoerrlow
+        log_rho_P = PLF['HERG_rho']
+        log_rho_P_erru = PLF['HERG_rhoerrup']
+        log_rho_P_errl = PLF['HERG_rhoerrlow']
     elif ttype == 'agn':
-        log_rho_P = PLF.AGN_rho
-        log_rho_P_erru = PLF.AGN_rhoerrup
-        log_rho_P_errl = PLF.AGN_rhoerrlow
+        log_rho_P = PLF['AGN_rho']
+        log_rho_P_erru = PLF['AGN_rhoerrup']
+        log_rho_P_errl = PLF['AGN_rhoerrlow']
     elif ttype == 'sf':
-        log_rho_P = PLF.SF_rho
-        log_rho_P_erru = PLF.SF_rhoerrup
-        log_rho_P_errl = PLF.SF_rhoerrlow
+        log_rho_P = PLF['SF_rho']
+        log_rho_P_erru = PLF['SF_rhoerrup']
+        log_rho_P_errl = PLF['SF_rhoerrlow']
     else:
         raise Exception('ttype not handled')
 
