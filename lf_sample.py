@@ -24,6 +24,9 @@ class lf_sample:
         if not os.path.isdir(self.savedir):
             print 'creating sample directory ',self.savedir
             os.mkdir(self.savedir)
+        #add trailing /
+        if self.savedir[-1] != '/':
+            self.savedir = self.savedir + '/'
         
         self.name = name
         self.zlim_low = zlow
