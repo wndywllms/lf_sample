@@ -1,5 +1,6 @@
 import sdss_sample_util
 import lf_sample
+import LF_util
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -98,10 +99,18 @@ ax.xaxis.set_major_locator( plt.MaxNLocator(nbins=6, prune='lower') )
 ax.xaxis.set_minor_locator( mpl.ticker.MultipleLocator(0.25))
 ax.yaxis.set_major_locator( mpl.ticker.LogLocator(numticks=5))
 
+ee = []
+l = ax.errorbar(low_z_sample.LF_x, low_z_sample.LF_rho, [low_z_sample.LF_rhoerrup, low_z_sample.LF_rhoerrlow], low_z_sample.LF_xerr, label='All' )
+ee.append(l)
+l = ax.errorbar(low_z_herg_sample.LF_x, low_z_herg_sample.LF_rho, [low_z_herg_sample.LF_rhoerrup, low_z_herg_sample.LF_rhoerrlow], low_z_herg_sample.LF_xerr, label='HERG' )
+ee.append(l)
+l = ax.errorbar(low_z_lerg_sample.LF_x, low_z_lerg_sample.LF_rho, [low_z_lerg_sample.LF_rhoerrup, low_z_lerg_sample.LF_rhoerrlow], low_z_lerg_sample.LF_xerr, label='LERG' )
+ee.append(l)
 
-ax.errorbar(low_z_sample.LF_x, low_z_sample.LF_rho, [low_z_sample.LF_rhoerrup, low_z_sample.LF_rhoerrlow], low_z_sample.LF_xerr, label='All' )
-ax.errorbar(low_z_herg_sample.LF_x, low_z_herg_sample.LF_rho, [low_z_herg_sample.LF_rhoerrup, low_z_herg_sample.LF_rhoerrlow], low_z_herg_sample.LF_xerr, label='HERG' )
-ax.errorbar(low_z_lerg_sample.LF_x, low_z_lerg_sample.LF_rho, [low_z_lerg_sample.LF_rhoerrup, low_z_lerg_sample.LF_rhoerrlow], low_z_lerg_sample.LF_xerr, label='LERG' )
+ee2 = []
+x,y, yerr =  LF_util.get_BH(ttype='agn', f=150.)
+l = ax.errorbar(x,y,yerr, label='BH AGN') 
+ee2.append(l)
 
 ax.set_ylabel(r'$\rho \,[\mathrm{Mpc}^{-3}~\log P ^{-1}]$')
     
@@ -109,7 +118,9 @@ ax.set_xlabel(r'$\log P \, [\log \mathrm{W~Hz}^{-1}]$')
 ax.set_ylim(10**-8.5, 10**-2.5)
 ax.set_xlim(22.0, 26.5)
 
-ax.legend(loc='upper left')
+l1 = ax.legend(handles=ee, loc='lower left')
+ax.add_artist(l1)
+ax.legend(handles=ee2, loc='upper right')
 plt.minorticks_on()
 plt.savefig('RLF_local_HERG_LERG')
 #pp.fig_save_many(f, 'RLF_local_HERG_LERG')

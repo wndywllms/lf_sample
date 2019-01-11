@@ -14,6 +14,8 @@ import astropy.units as u
 acosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
 
+MODPATH = os.path.dirname(__file__)
+
 class completenessf(object):
     def __init__(self,npyfile):
         area_i,irangep,fraction_total_MC_mean,fraction_total_MC_sig,fraction_total_MC_mean_perArea = np.load(npyfile)
@@ -1114,7 +1116,7 @@ def get_novak_lf_model(z=0, scalef=150.):
 
 def get_BH(ttype='all', f=150.):
     # load Best & Heckman LF
-    BHLF = Table.read('/local/wwilliams/herts_projects/bootes_RLF/LFs/bestheckmanLF.fits')
+    BHLF = Table.read(os.path.join(MODPATH,'data/LFs/bestheckmanLF.fits'))
     logPlow = BHLF['Plow']
     logPhigh = BHLF['Phigh']
     logp_BH = (logPlow+logPhigh)/2.
@@ -1157,9 +1159,9 @@ def get_BH(ttype='all', f=150.):
 
 def get_MS(ttype='agn', f=150.):
     if ttype == 'agn':
-        ff = '/local/wwilliams/herts_projects/bootes_RLF/LFs/ms-agn.txt'
+        ff = os.path.join(MODPATH,'data/LFs/ms-agn.txt') 
     elif ttype =='sf':
-        ff = '/local/wwilliams/herts_projects/bootes_RLF/LFs/ms-sf.txt'
+        ff = os.path.join(MODPATH,'data/LFs/ms-sf.txt') 
         
     elif ttype == 'all':
         xA, yA, yerrA = get_MS(ttype='agn', f=f)
@@ -1200,9 +1202,9 @@ def get_MS(ttype='agn', f=150.):
 
 def get_P(ttype='agn', f=150.):
     if ttype == 'agn':
-        ff = '/local/wwilliams/herts_projects/bootes_RLF/LFs/prescott-agn.txt'
+        ff = os.path.join(MODPATH,'data/LFs/prescott-agn.txt')
     elif ttype =='sf':
-        ff = '/local/wwilliams/herts_projects/bootes_RLF/LFs/prescott-sf.txt'
+        ff = os.path.join(MODPATH,'data/LFs/prescott-sf.txt')
     elif ttype == 'all':
         xA, yA, yerrA = get_P(ttype='agn', f=f)
         xS, yS, yerrS = get_P(ttype='sf', f=f)
@@ -1239,9 +1241,9 @@ def get_P(ttype='agn', f=150.):
 
 def get_mjh(ttype='agn'):
     if ttype == 'agn':
-        f = '/local/wwilliams/herts_projects/bootes_RLF/LFs/lofar-agn.txt'
+        f = os.path.join(MODPATH,'data/LFs/lofar-agn.txt')
     elif ttype =='sf':
-        f = '/local/wwilliams/herts_projects/bootes_RLF/LFs/lofar-sf.txt'
+        f = os.path.join(MODPATH,'data/LFs/lofar-sf.txt')
     elif ttype == 'all':
         xA, yA, yerrA = get_mjh(ttype='agn')
         xS, yS, yerrS = get_mjh(ttype='sf')
@@ -1272,7 +1274,7 @@ def get_mjh(ttype='agn'):
 
 def get_pracy_LF(ttype='all', f=150.):
     # load Best & Heckman LF
-    PLF = Table.read('/local/wwilliams/herts_projects/bootes_RLF/LFs/pracy.fits')
+    PLF = Table.read(os.path.join(MODPATH,'data/LFs/pracy.fits'))
     logp_P = PLF['P']
 
     # scale to 150 MHz
