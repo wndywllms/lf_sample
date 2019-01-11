@@ -1,8 +1,18 @@
-TDOD add citations
+# Best & Heckman 2012
+# https://ui.adsabs.harvard.edu/#abs/2012MNRAS.421.1569B/abstract
 bestheckmanLF.fits
+
+# Mauch & Sadler 2007
+# https://ui.adsabs.harvard.edu/#abs/2007MNRAS.375..931M/abstract
 ms-agn.txt
 ms-sf.txt
+
+# Pracy+ 2016
+# https://ui.adsabs.harvard.edu/#abs/2016MNRAS.460....2P/abstract
 pracy.fits
 pracy.txt
+
+# Prescott+ 2016
+# https://ui.adsabs.harvard.edu/#abs/2016MNRAS.457..730P/abstract
 prescott-agn.txt
 prescott-sf.txt
