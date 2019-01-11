@@ -1,66 +1,13 @@
+import sdss_sample_util
+import lf_sample
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib as mpl
 
-
-
-
-def sdss_select_good_radio_sample(maglim_bright, fmaglim_faint, radiofluxlim, good=True):
-    '''
-    read sdss catalogue and output a lf_sample array
-    '''
-    
-    CATPATH = '/home/wwilliams/'
-
-    
-    
-    cat_sdss1 = load_fits(CATPATH+'projects/sdss/sdss_dr7_radiosources_with_wise_matches_allsources_vasc_sdss.fits')
-    cat_sdss = cat_sdss1.copy()
-    # rad_agn = 1 for AGN, 0 for SF
-    # lerg = 1 for lerg
-    # herg = 1 for herg
-
-    if good:
-        # main_samp =1 included in main sample
-        cat_sdss = cat_sdss[np.where(cat_sdss.main_samp==1)]
-
-        #### FLUX LIMIT ###
-        cat_sdss = cat_sdss[np.where(cat_sdss.S_NVSS > radiofluxlim)]   # radio flux limit
-
-        #### MAGNITUDE LIMITS ###
-        cat_sdss = cat_sdss[np.where((cat_sdss.mag_r >= maglim_bright) & (cat_sdss.mag_r <= maglim_faint))]   # magnitude cut
-
-
-    # Redshift
-    zz = cat_sdss.z
-
-    # Magnitudes
-    rmag = cat_sdss.mag_r   
-    frmag = 3631.*10.**(-0.4*rmag)    # AB mag
-    rlum = LF_util.OpticalLuminosity(frmag, zz)
-
-    # Radio flux
-    ff = cat_sdss.S_NVSS   #in Jy
-    power = np.log10(LF_util.RadioPower(ff, zz, alpha=0.8))  # assumed spec ind
-
-    smass = cat_sdss.Mass
-    sfr = cat_sdss.SFR
-    
-
-    lf_cat = np.core.records.fromarrays((zz, ff, power, rmag, rlum, smass, sfr, cat_sdss.rad_agn, cat_sdss.herg, cat_sdss.lerg), names='z, radio_flux, power, opt_mag, opt_lum, smass, sfr, agn, herg, lerg', formats = 'f8, f8, f8, f8, f8, f8, f8, i8, i8, i8')
-    
-
-    return cat_sdss, lf_cat
-
-
-areaSDSS = 2.17    ## 2.17 st calculated by Best and Heckman
-maglim_bright = 14.5
-maglim_faint = 17.77
-fmaglim_bright =  3631.*10**(-0.4*maglim_bright)  # AB mag
-fmaglim_faint =  3631.*10**(-0.4*maglim_faint)    # AB mag
-
-radiofluxlim = 5e-3               ## in Jy
 
 # load sdss catalogue
 # load sdss #
-cat_nvsssdss_all, lfcat_nvsssdss_all = sdss_sample_util.sdss_select_good_radio_sample()
+lfcat_nvsssdss_all = sdss_sample_util.select_good_radio_sample()
 
 # initialise lf_sample instance
 sdss_radio_sample = lf_sample.lf_sample("NVSS_SDSS", lfcat_nvsssdss_all, zlow=0.01, zhigh=0.3, radio_fluxlim_faint = sdss_sample_util.radiofluxlim, opt_fluxlim_faint = sdss_sample_util.fmaglim_faint, opt_fluxlim_bright=sdss_sample_util.fmaglim_bright, area=sdss_sample_util.areaSDSS)
@@ -86,15 +33,69 @@ low_z_lerg_sample.compute_LF(pgrid_radio_lf)
 
 
 
+def load_BH():
+    # load Best & Heckman LF
+    BHLF = load_fits('bestheckmanLF.fits')
+    logPlow = BHLF.Plow
+    logPhigh = BHLF.Phigh
+    logp_BH = (logPlow+logPhigh)/2.
+    log_rho_AGN_BH = BHLF.AGN_log_rho
+    log_rho_AGN_BH_erru = BHLF.AGN_err_up
+    log_rho_AGN_BH_errl = BHLF.AGN_err_low
+
+    log_rho_SF_BH = BHLF.SF_log_rho
+    log_rho_SF_BH_erru = BHLF.SF_err_up
+    log_rho_SF_BH_errl = BHLF.SF_err_low
+
+    log_rho_L_BH = BHLF.L_log_rho
+    log_rho_L_BH_erru = BHLF.L_err_up
+    log_rho_L_BH_errl = BHLF.L_err_low
+
+    log_rho_H_BH = BHLF.H_log_rho
+    log_rho_H_BH_erru = BHLF.H_err_up
+    log_rho_H_BH_errl = BHLF.H_err_low
+
+    log_rho_A_BH = BHLF.A_log_rho
+    log_rho_A_BH_erru = BHLF.A_err_up
+    log_rho_A_BH_errl = BHLF.A_err_low
+
+
+    rho_AGN_BH = 10**log_rho_AGN_BH
+    rho_AGN_BH_erru = 10**(log_rho_AGN_BH+log_rho_AGN_BH_erru) - 10**(log_rho_AGN_BH)
+    rho_AGN_BH_errl = 10**(log_rho_AGN_BH) - 10**(log_rho_AGN_BH-log_rho_AGN_BH_errl)
+
+    rho_SF_BH = 10**log_rho_SF_BH
+    rho_SF_BH_erru = 10**(log_rho_SF_BH+log_rho_SF_BH_erru) - 10**(log_rho_SF_BH)
+    rho_SF_BH_errl = 10**(log_rho_SF_BH) - 10**(log_rho_SF_BH-log_rho_SF_BH_errl)
+
+    rho_L_BH = 10**log_rho_L_BH
+    rho_L_BH_erru = 10**(log_rho_L_BH+log_rho_L_BH_erru) - 10**(log_rho_L_BH)
+    rho_L_BH_errl = 10**(log_rho_L_BH) - 10**(log_rho_L_BH-log_rho_L_BH_errl)
+
+    rho_H_BH = 10**log_rho_H_BH
+    rho_H_BH_erru = 10**(log_rho_H_BH+log_rho_H_BH_erru) - 10**(log_rho_H_BH)
+    rho_H_BH_errl = 10**(log_rho_H_BH) - 10**(log_rho_H_BH-log_rho_H_BH_errl)
+
+    rho_A_BH = 10**log_rho_A_BH
+    rho_A_BH_erru = 10**(log_rho_A_BH+log_rho_A_BH_erru) - 10**(log_rho_A_BH)
+    rho_A_BH_errl = 10**(log_rho_A_BH) - 10**(log_rho_A_BH-log_rho_A_BH_errl)
+
+    return logp_BH, rho_AGN_BH, [rho_AGN_BH_erru, rho_AGN_BH_errl], rho_SF_BH, 
+
 
 ## PLOT ##
 
-f, ax = pp.paper_single_ax()
-pl.minorticks_on()
+#f, ax = pp.paper_single_ax()
+mpl.rc('text', usetex=True)
+
+
+f = plt.figure()
+ax = f.add_subplot(111)
+plt.minorticks_on()
 
 ax.set_yscale('log')
-ax.xaxis.set_major_locator( pl.MaxNLocator(nbins=6, prune='lower') )
-ax.xaxis.set_minor_locator(MultipleLocator(0.25))
+ax.xaxis.set_major_locator( plt.MaxNLocator(nbins=6, prune='lower') )
+ax.xaxis.set_minor_locator( mpl.ticker.MultipleLocator(0.25))
 ax.yaxis.set_major_locator( mpl.ticker.LogLocator(numticks=5))
 
 
@@ -109,5 +110,6 @@ ax.set_ylim(10**-8.5, 10**-2.5)
 ax.set_xlim(22.0, 26.5)
 
 ax.legend(loc='upper left')
-pl.minorticks_on()
-pp.fig_save_many(f, 'RLF_local_HERG_LERG')
+plt.minorticks_on()
+plt.savefig('RLF_local_HERG_LERG')
+#pp.fig_save_many(f, 'RLF_local_HERG_LERG')
