@@ -1,6 +1,7 @@
 import LF_util
 import numpy as np
-from fits_util import load_fits
+from astropy.table import Table, MaskedColumn
+
 
 
 maglim_bright = 14.5
@@ -11,7 +12,7 @@ fmaglim_faint =  3631.*10**(-0.4*maglim_faint)    # AB mag
 radiofluxlim = 5e-3               ## in Jy
 
 
-CATPATH = '/home/wwilliams/'
+CATPATH = './'
 
 
 def SMenvelope(z=None, m=None):
@@ -78,8 +79,8 @@ def select_good_sample(good=True):
     non_dup_ind = tt['ind']
 
     print "read full sdss catalogue"
-    cat_sdss = load_fits(CATPATH+'projects/sdss/gal_fnal_dr7_v5_2.fit')
-    #cat_sdss = load_fits(PATH+'projects/sdss/gal_fnal_dr7_v5_2.copy.fit')
+    cat_sdss = Table.read(CATPATH+'projects/sdss/gal_fnal_dr7_v5_2.fit')
+    #cat_sdss = Table.read(PATH+'projects/sdss/gal_fnal_dr7_v5_2.copy.fit')
     # cut out the duplicates
     cat_sdss = cat_sdss[non_dup_ind]
     
@@ -100,15 +101,15 @@ def select_good_sample(good=True):
 
     # The mass file
     print "read full sdss sm catalogue"
-    cat_sdss_sm = load_fits(CATPATH+'projects/sdss/totlgm_dr7_v5_2b.fit')
-    #cat_sdss_sm = load_fits(PATH+'projects/sdss/totlgm_dr7_v5_2.fit')
+    cat_sdss_sm = Table.read(CATPATH+'projects/sdss/totlgm_dr7_v5_2b.fit')
+    #cat_sdss_sm = Table.read(PATH+'projects/sdss/totlgm_dr7_v5_2.fit')
     cat_sdss_sm = cat_sdss_sm[non_dup_ind]
     cat_sdss_sm = cat_sdss_sm[selind_block]
 
     # The sfr file
     print "read full sdss sfr catalogue"
-    cat_sdss_sfr = load_fits(CATPATH+'projects/sdss/gal_totsfr_dr7_v5_2.fits')
-    #cat_sdss_sfr = load_fits(PATH+'projects/sdss/totlgm_dr7_v5_2.fit')
+    cat_sdss_sfr = Table.read(CATPATH+'projects/sdss/gal_totsfr_dr7_v5_2.fits')
+    #cat_sdss_sfr = Table.read(PATH+'projects/sdss/totlgm_dr7_v5_2.fit')
     cat_sdss_sfr = cat_sdss_sfr[non_dup_ind]
     cat_sdss_sfr = cat_sdss_sfr[selind_block]
     
@@ -117,7 +118,7 @@ def select_good_sample(good=True):
 
     # the redshift file
     print "read full sdss z catalogue"
-    cat_sdss_z = load_fits(CATPATH+'projects/sdss/gal_info_dr7_v5_2.fit')
+    cat_sdss_z = Table.read(CATPATH+'projects/sdss/gal_info_dr7_v5_2.fit')
     cat_sdss_z = cat_sdss_z[non_dup_ind]
     cat_sdss_z = cat_sdss_z[selind_block]
 
@@ -181,7 +182,7 @@ def select_good_radio_sample(good=True):
     global maglim_faint
     global radiofluxlim
     
-    cat_sdss1 = load_fits(CATPATH+'projects/sdss/sdss_dr7_radiosources_with_wise_matches_allsources_vasc_sdss.fits')
+    cat_sdss1 = Table.read(CATPATH+'/sdss_dr7_radiosources_with_wise_matches_allsources_vasc_sdss.fits')
     cat_sdss = cat_sdss1.copy()
     # rad_agn = 1 for AGN, 0 for SF
     # lerg = 1 for lerg
@@ -189,35 +190,47 @@ def select_good_radio_sample(good=True):
 
     if good:
         # main_samp =1 included in main sample
-        cat_sdss = cat_sdss[np.where(cat_sdss.main_samp==1)]
+        cat_sdss = cat_sdss[np.where(cat_sdss['main_samp']==1)]
 
         #### FLUX LIMIT ###
-        cat_sdss = cat_sdss[np.where(cat_sdss.S_NVSS > radiofluxlim)]   # radio flux limit
+        cat_sdss = cat_sdss[np.where(cat_sdss['S_NVSS'] > radiofluxlim)]   # radio flux limit
 
         #### MAGNITUDE LIMITS ###
-        cat_sdss = cat_sdss[np.where((cat_sdss.mag_r >= maglim_bright) & (cat_sdss.mag_r <= maglim_faint))]   # magnitude cut
+        cat_sdss = cat_sdss[np.where((cat_sdss['mag_r'] >= maglim_bright) & (cat_sdss['mag_r'] <= maglim_faint))]   # magnitude cut
 
 
     # Redshift
-    zz = cat_sdss.z
+    zz = cat_sdss['z']
 
     # Magnitudes
-    rmag = cat_sdss.mag_r   
+    rmag = cat_sdss['mag_r']   
     frmag = 3631.*10.**(-0.4*rmag)    # AB mag
     rlum = LF_util.OpticalLuminosity(frmag, zz)
 
     # Radio flux
-    ff = cat_sdss.S_NVSS   #in Jy
+    ff = cat_sdss['S_NVSS']   #in Jy
     power = np.log10(LF_util.RadioPower(ff, zz, alpha=0.8))  # assumed spec ind
 
-    smass = cat_sdss.Mass
-    sfr = cat_sdss.SFR
+    smass = cat_sdss['Mass']
+    sfr = cat_sdss['SFR']
     
 
-    lf_cat = np.core.records.fromarrays((zz, ff, power, rmag, rlum, smass, sfr, cat_sdss.rad_agn, cat_sdss.herg, cat_sdss.lerg), names='z, radio_flux, power, opt_mag, opt_lum, smass, sfr, agn, herg, lerg', formats = 'f8, f8, f8, f8, f8, f8, f8, i8, i8, i8')
+    #lf_cat = np.core.records.fromarrays((zz, ff, power, rmag, rlum, smass, sfr, cat_sdss['rad_agn'], cat_sdss['herg'], cat_sdss['lerg']), names='z, radio_flux, power, opt_mag, opt_lum, smass, sfr, agn, herg, lerg', formats = 'f8, f8, f8, f8, f8, f8, f8, i8, i8, i8')
     
+    cat_sdss.rename_column('rad_agn','agn')
 
-    return cat_sdss, lf_cat
+    cat_sdss.add_column(MaskedColumn(ff ,'radio_flux'))
+    cat_sdss.add_column(MaskedColumn(power ,'power'))
+    cat_sdss.add_column(MaskedColumn(rmag ,'opt_mag'))
+    cat_sdss.add_column(MaskedColumn(rlum ,'opt_lum'))
+    cat_sdss.add_column(MaskedColumn(smass ,'smass'))
+    cat_sdss.add_column(MaskedColumn(sfr ,'sfr'))
+
+    
+    keeplist = ['z', 'radio_flux', 'power', 'opt_mag', 'opt_lum', 'smass', 'sfr', 'agn', 'herg', 'lerg']
+    cat_sdss.keep_columns(keeplist)
+
+    return cat_sdss
 
 
 
