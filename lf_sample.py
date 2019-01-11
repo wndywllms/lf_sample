@@ -369,7 +369,7 @@ class lf_sample:
             PVzmax = LF_util.get_Vzmax(self.cat['z'], 10.**self.cat['power'], self.radio_fluxlim_faint, self.domega, rmsmap=self.rmsmap, completeness=self.completeness, stype='Radio',filename='{ddir}Vzmax.radio.sav.{name}.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
             PVzmin = LF_util.get_Vzmin(self.cat['z'], 10.**self.cat['power'], self.radio_fluxlim_faint, self.domega, zmin=self.zlim_low, rmsmap=self.rmsmap, completeness=self.completeness, stype='Radio',filename='{ddir}Vzmin.radio.sav.{name}.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
         OptVzmax = LF_util.get_Vzmax(self.cat['z'], self.cat['opt_lum'], self.opt_fluxlim_faint, self.domega, stype='Optical',filename='{ddir}Vzmax.optical.sav.{name}.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
-        OptVzmin = LF_util.get_Vzmin(self.cat['z'], self.cat['opt_lum'], self.opt_fluxlim_bright, self.domega, stype='Optical',filename='{ddir}Vzmin.optical.sav.{name}.npy'.format(ddir=self.savedirm name=self.name), clobber=forcecalc, savefile=savefiles)
+        OptVzmin = LF_util.get_Vzmin(self.cat['z'], self.cat['opt_lum'], self.opt_fluxlim_bright, self.domega, stype='Optical',filename='{ddir}Vzmin.optical.sav.{name}.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
         #import ipdb
         #if haspower:
             #if np.any(PVzmin >= PVzmax):
