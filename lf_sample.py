@@ -1,4 +1,4 @@
-import pyfits as pf
+import astropy.io.fits as pf
 from utils.fits_util import *
 from astropy.table import Table, Column
 #from LF_util import *

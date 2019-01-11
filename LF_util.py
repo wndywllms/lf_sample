@@ -25,6 +25,10 @@ class completenessf(object):
         #print flux, np.min(self.C_flux_interp.x), np.max(self.C_flux_interp.x)
         return self.C_flux_interp(flux)
 
+def mp_vax(arg, **kwarg):
+    return rmsmap.vmax(*arg, **kwarg)
+    
+
 class rmsmapz(object):
     def __init__(self,map,sampling=100):
         # map is a 2D nan-blanked FITS array as produced by PyBDSF
@@ -299,6 +303,10 @@ def get_Vzmax(z, L, fluxlim2, stype='Radio',filename='Vzmax.sav.npy', clobber=Fa
                 sys.exit(1)
             for i in range( 0, Nsrc2):
                 Vzmax[i] = rmsmap.vmax(L[i])
+                #print 'test pool1'
+                #pool = mp.Pool(np.min((16,mp.cpu_count())))
+                #Vzmax = np.array(pool.map(mp_vax, itertools.izip(itertools.repeat(rmsmap), L)   ))
+                
         if (completeness is not None) and (stype=='Radio'):
             if not isinstance(completeness, completenessf):
                 print "ERROR, completeness instance not initialised/passed properly"
