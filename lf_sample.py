@@ -19,6 +19,11 @@ class lf_sample:
   
   
     def __init__(self, name, cat, zlow=0, zhigh=20, radio_fluxlim_faint=np.nan, opt_fluxlim_faint=np.nan, opt_fluxlim_bright=np.nan, domega=np.nan, area=np.nan, rmsmap=None, completeness=None, savedir='./'):
+        '''
+        define the survey area either as:
+            area - in square degrees!
+            domega - is the faction of the full sky
+        '''
         
         self.savedir = savedir
         if not os.path.isdir(self.savedir):
@@ -51,7 +56,7 @@ class lf_sample:
                 if self.domega != self.rmsmap.domega:
                     self.domega = self.rmsmap.domega
                     self.area = self.rmsmap.area
-                    print 'WARNING updating area, using {A:.3f} deg^2 from the rms map ({p:.3f})'.format(A=self.area, p = self.domega) 
+                    print 'WARNING updating area, using {A:.3f} deg^2 from the rms map ({p:.3f})'.format(A=self.area, p=self.domega) 
                 
             elif isinstance(rmsmap, str):
                 if os.path.exists(rmsmap):
@@ -61,7 +66,7 @@ class lf_sample:
                     if self.domega != self.rmsmap.domega:
                         self.domega = self.rmsmap.domega
                         self.area = self.rmsmap.area
-                        print 'WARNING updating area, using {A:.3f} deg^2 from the rms map ({p:.3f})'.format(A=self.area, p = self.domega) 
+                        print 'WARNING updating area, using {A:.3f} deg^2 from the rms map ({p:.3f})'.format(A=self.area, p=self.domega) 
                     
                 else:
                     print "WARNING given rmsmap {map:s} does not exist, continuing without".format(map=rmsmap)
@@ -367,7 +372,9 @@ class lf_sample:
         #at what redshift does each source fall below the flux density limit?
         if haspower:
             PVzmax = LF_util.get_Vzmax(self.cat['z'], 10.**self.cat['power'], self.radio_fluxlim_faint, self.domega, rmsmap=self.rmsmap, completeness=self.completeness, stype='Radio',filename='{ddir}Vzmax.radio.sav.{name}.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
-            PVzmin = LF_util.get_Vzmin(self.cat['z'], 10.**self.cat['power'], self.radio_fluxlim_faint, self.domega, zmin=self.zlim_low, rmsmap=self.rmsmap, completeness=self.completeness, stype='Radio',filename='{ddir}Vzmin.radio.sav.{name}.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
+            ## argh, why???
+            ##PVzmin = LF_util.get_Vzmin(self.cat['z'], 10.**self.cat['power'], self.radio_fluxlim_faint, self.domega, zmin=self.zlim_low, rmsmap=self.rmsmap, completeness=self.completeness, stype='Radio',filename='{ddir}Vzmin.radio.sav.{name}.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
+            PVzmin = np.ones(len(self.cat)) * self.domega*acosmo.comoving_volume(self.zlim_low).value
         OptVzmax = LF_util.get_Vzmax(self.cat['z'], self.cat['opt_lum'], self.opt_fluxlim_faint, self.domega, stype='Optical',filename='{ddir}Vzmax.optical.sav.{name}.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
         OptVzmin = LF_util.get_Vzmin(self.cat['z'], self.cat['opt_lum'], self.opt_fluxlim_bright, self.domega, stype='Optical',filename='{ddir}Vzmin.optical.sav.{name}.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
         #import ipdb
