@@ -33,57 +33,6 @@ low_z_lerg_sample.compute_LF(pgrid_radio_lf)
 
 
 
-
-def load_BH():
-    # load Best & Heckman LF
-    BHLF = load_fits('bestheckmanLF.fits')
-    logPlow = BHLF.Plow
-    logPhigh = BHLF.Phigh
-    logp_BH = (logPlow+logPhigh)/2.
-    log_rho_AGN_BH = BHLF.AGN_log_rho
-    log_rho_AGN_BH_erru = BHLF.AGN_err_up
-    log_rho_AGN_BH_errl = BHLF.AGN_err_low
-
-    log_rho_SF_BH = BHLF.SF_log_rho
-    log_rho_SF_BH_erru = BHLF.SF_err_up
-    log_rho_SF_BH_errl = BHLF.SF_err_low
-
-    log_rho_L_BH = BHLF.L_log_rho
-    log_rho_L_BH_erru = BHLF.L_err_up
-    log_rho_L_BH_errl = BHLF.L_err_low
-
-    log_rho_H_BH = BHLF.H_log_rho
-    log_rho_H_BH_erru = BHLF.H_err_up
-    log_rho_H_BH_errl = BHLF.H_err_low
-
-    log_rho_A_BH = BHLF.A_log_rho
-    log_rho_A_BH_erru = BHLF.A_err_up
-    log_rho_A_BH_errl = BHLF.A_err_low
-
-
-    rho_AGN_BH = 10**log_rho_AGN_BH
-    rho_AGN_BH_erru = 10**(log_rho_AGN_BH+log_rho_AGN_BH_erru) - 10**(log_rho_AGN_BH)
-    rho_AGN_BH_errl = 10**(log_rho_AGN_BH) - 10**(log_rho_AGN_BH-log_rho_AGN_BH_errl)
-
-    rho_SF_BH = 10**log_rho_SF_BH
-    rho_SF_BH_erru = 10**(log_rho_SF_BH+log_rho_SF_BH_erru) - 10**(log_rho_SF_BH)
-    rho_SF_BH_errl = 10**(log_rho_SF_BH) - 10**(log_rho_SF_BH-log_rho_SF_BH_errl)
-
-    rho_L_BH = 10**log_rho_L_BH
-    rho_L_BH_erru = 10**(log_rho_L_BH+log_rho_L_BH_erru) - 10**(log_rho_L_BH)
-    rho_L_BH_errl = 10**(log_rho_L_BH) - 10**(log_rho_L_BH-log_rho_L_BH_errl)
-
-    rho_H_BH = 10**log_rho_H_BH
-    rho_H_BH_erru = 10**(log_rho_H_BH+log_rho_H_BH_erru) - 10**(log_rho_H_BH)
-    rho_H_BH_errl = 10**(log_rho_H_BH) - 10**(log_rho_H_BH-log_rho_H_BH_errl)
-
-    rho_A_BH = 10**log_rho_A_BH
-    rho_A_BH_erru = 10**(log_rho_A_BH+log_rho_A_BH_erru) - 10**(log_rho_A_BH)
-    rho_A_BH_errl = 10**(log_rho_A_BH) - 10**(log_rho_A_BH-log_rho_A_BH_errl)
-
-    return logp_BH, rho_AGN_BH, [rho_AGN_BH_erru, rho_AGN_BH_errl], rho_SF_BH, 
-
-
 ## PLOT ##
 
 #f, ax = pp.paper_single_ax()
