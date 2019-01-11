@@ -182,8 +182,7 @@ def select_good_radio_sample(good=True):
     global maglim_faint
     global radiofluxlim
     
-    cat_sdss1 = Table.read(CATPATH+'/sdss_dr7_radiosources_with_wise_matches_allsources_vasc_sdss.fits')
-    cat_sdss = cat_sdss1.copy()
+    cat_sdss = Table.read(CATPATH+'/sdss_dr7_radiosources_with_wise_matches_allsources_vasc_sdss.fits')
     # rad_agn = 1 for AGN, 0 for SF
     # lerg = 1 for lerg
     # herg = 1 for herg
@@ -191,12 +190,18 @@ def select_good_radio_sample(good=True):
     if good:
         # main_samp =1 included in main sample
         cat_sdss = cat_sdss[np.where(cat_sdss['main_samp']==1)]
+        # mag limit below should be equivalent - should be based on the Petrosian r mag for DR7 (but doesn't quite match up...)
+        print len(cat_sdss)
+        cat_sdss = cat_sdss[np.where((cat_sdss['z']> 0.01) & (cat_sdss['z']< 0.3))]
+        print len(cat_sdss)
 
         #### FLUX LIMIT ###
-        cat_sdss = cat_sdss[np.where(cat_sdss['S_NVSS'] > radiofluxlim)]   # radio flux limit
+        cat_sdss = cat_sdss[np.where(cat_sdss['S_NVSS'] >= radiofluxlim)]   # radio flux limit
+        print len(cat_sdss)
 
         #### MAGNITUDE LIMITS ###
         cat_sdss = cat_sdss[np.where((cat_sdss['mag_r'] >= maglim_bright) & (cat_sdss['mag_r'] <= maglim_faint))]   # magnitude cut
+        print len(cat_sdss)
 
 
     # Redshift
@@ -235,7 +240,7 @@ def select_good_radio_sample(good=True):
 
 
 
-areaSDSS = 2.17    ## 2.17 st calculated by Best and Heckman
+areaSDSS = 2.17  * (180./np.pi)**2.   ## 2.17 st calculated by Best and Heckman
 areaSDSS_full = 2.4    ## area of full sdss sample
 areaSDSS_full = 1.2    ## test
 areaSDSS_full = 0.6    ## test
