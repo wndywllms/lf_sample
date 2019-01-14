@@ -50,8 +50,8 @@ class rmsmapz(object):
         degtost = (180./np.pi)**2.  # sq degrees to steradians 
         self.area_sr= self.area/degtost
         self.domega=self.area_sr / (4.*np.pi)
-        print 'Read',map,'area is {:.3f} deg^2'.format(self.area)
-        print 'Read',map,'area is {:.3f} percent of sky'.format(self.domega)
+        print('Read',map,'area is {:.3f} deg^2'.format(self.area))
+        print('Read',map,'area is {:.3f} percent of sky'.format(self.domega))
 
     def vmax(self,L):
         # compute the Smolcic Ak*V_max(L,rms_k) sum
@@ -73,7 +73,7 @@ class rmsmapz(object):
         self.alpha=alpha
         rmin=Lmin/(factor*self.max)
         rmax=Lmax/(factor*self.min)
-        print 'Using r range {:.2e} to {:.2e}'.format(rmin,rmax)
+        print('Using r range {:.2e} to {:.2e}'.format(rmin,rmax))
         rvals=np.linspace(np.log10(rmin),np.log10(rmax),self.sampling)
         zvals=np.zeros_like(rvals)
         for i in range(len(rvals)):
@@ -115,8 +115,8 @@ class rmsz(rmsmapz):
         degtost = (180./np.pi)**2.  # sq degrees to steradians 
         self.area_sr= self.area/degtost
         self.domega=self.area_sr / (4.*np.pi)
-        print 'Read',npyfile,'area is {:.2f} deg^2'.format(self.area)
-        print 'Read',npyfile,'area is {:.2f} percent of sky'.format(100*self.domega)
+        print('Read',npyfile,'area is {:.2f} deg^2'.format(self.area))
+        print('Read',npyfile,'area is {:.2f} percent of sky'.format(100*self.domega))
         
         return
 
@@ -225,7 +225,7 @@ def vmax(m,z,mlim,area):
         try:
             zlim = sp.optimize.brentq(zlim_func, 0., 10., args=(m,z,mlim))
         except RuntimeError:
-            print 'solve not converging %.3f, %.3f, %.3f' %(m,z,mlim)
+            print('solve not converging %.3f, %.3f, %.3f' %(m,z,mlim))
             zlim = np.nan
             return np.nan
     else:
@@ -288,7 +288,7 @@ def get_Vzmax(z, L, fluxlim2, domega, stype='Radio',filename='Vzmax.sav.npy', cl
     
     
     if os.path.isfile(filename) and (not clobber):
-        print 'read Vzmax from '+filename
+        print('read Vzmax from '+filename)
         Vzmax = np.load(filename)
     else:
         if os.path.isfile(filename): os.system('rm -rf '+filename)
@@ -296,7 +296,7 @@ def get_Vzmax(z, L, fluxlim2, domega, stype='Radio',filename='Vzmax.sav.npy', cl
         
     Nsrc2 = len(z)
     if len(Vzmax) != len(z):
-        print 'calculating Vzmax for '+filename
+        print('calculating Vzmax for '+filename)
         Vzmax   = np.zeros(Nsrc2)
         
         if (rmsmap is None) or (stype=='Optical'):
@@ -312,13 +312,13 @@ def get_Vzmax(z, L, fluxlim2, domega, stype='Radio',filename='Vzmax.sav.npy', cl
     
     
             pool = mp.Pool(np.min((16,mp.cpu_count())))
-            Vzmax = np.array(pool.map(func_star, itertools.izip(range(Nsrc2), itertools.repeat([z,L,fluxlim2,stype]))))
+            Vzmax = np.array(pool.map(func_star, zip(list(range(Nsrc2)), itertools.repeat([z,L,fluxlim2,stype]))))
             Vzmax = domega*Vzmax
             
         # handle the varying rms case
         else:
             if not isinstance(rmsmap, rmsmapz):
-                print "ERROR, rmsmap instance not initialised/passed properly"
+                print("ERROR, rmsmap instance not initialised/passed properly")
                 sys.exit(1)
             for i in range( 0, Nsrc2):
                 Vzmax[i] = rmsmap.vmax(L[i])
@@ -328,13 +328,13 @@ def get_Vzmax(z, L, fluxlim2, domega, stype='Radio',filename='Vzmax.sav.npy', cl
                 
         if (completeness is not None) and (stype=='Radio'):
             if not isinstance(completeness, completenessf):
-                print "ERROR, completeness instance not initialised/passed properly"
+                print("ERROR, completeness instance not initialised/passed properly")
                 sys.exit(1)
             for i in range( 0, Nsrc2):
                 ft = RadioFlux(L[i], z[i], alpha=0.7)
                 #print completeness.get_val(ft)
                 if verbose:
-                    print ft, completeness.get_val(ft),  Vzmax[i], Vzmax[i]*completeness.get_val(ft)
+                    print(ft, completeness.get_val(ft),  Vzmax[i], Vzmax[i]*completeness.get_val(ft))
                 Vzmax[i] = Vzmax[i]*completeness.get_val(ft)
                 #Vzmax[i] = Vzmax[i]/completeness.get_val(ft)
                 
@@ -360,33 +360,33 @@ def func_star_zmax1():
 
 def get_zmax_mp(z, L, fluxlim2, stype='Radio',filename='zmax.sav.npy', clobber=False):
     if os.path.isfile(filename) and (not clobber):
-        print 'read zmax from '+filename
+        print('read zmax from '+filename)
         zmax = np.load(filename)
     else:
         if os.path.isfile(filename): os.system('rm -rf '+filename)
         zmax = np.zeros(0)
     Nsrc2 = len(z)
     if len(zmax) != len(z):
-        print 'calculating zmax for '+filename
+        print('calculating zmax for '+filename)
         pool = mp.Pool(np.min((16,mp.cpu_count())))
         #results = [pool.apply_async(get_zmax1, args=(zi,Li,fluxlim2,stype)) for zi, Li in zip(z,L)]
         #zmax =  [p.get() for p in results]
         #zmax = np.array(zmax)
-        zmax = np.array(pool.map(func_star_zmax1, itertools.izip(range(Nsrc2), itertools.repeat([z,L,fluxlim2,stype]))))
+        zmax = np.array(pool.map(func_star_zmax1, zip(list(range(Nsrc2)), itertools.repeat([z,L,fluxlim2,stype]))))
         np.save(filename, (zmax))
     return zmax
 
 
 def get_zmax(z, L, fluxlim2, stype='Radio',filename='zmax.sav.npy', clobber=False):
     if os.path.isfile(filename) and (not clobber):
-        print 'read zmax from '+filename
+        print('read zmax from '+filename)
         zmax = np.load(filename)
     else:
         if os.path.isfile(filename): os.system('rm -rf '+filename)
         zmax = np.zeros(0)
     Nsrc2 = len(z)
     if len(zmax) != len(z):
-        print 'calculating zmax for '+filename
+        print('calculating zmax for '+filename)
         zmax   = np.zeros(Nsrc2)
         for i in range( 0, Nsrc2):
             zt = np.arange(5,-0.001,-0.01) + z[i]
@@ -405,14 +405,14 @@ def get_Vzmin_old(z, L, fluxlim2, stype='Radio',filename='Vzmin.sav.npy', clobbe
     NB not implementing rmsmap yet for zmin... this mostly applies to optical
     '''
     if os.path.isfile(filename) and (not clobber):
-        print 'read Vzmin from '+filename
+        print('read Vzmin from '+filename)
         Vzmin = np.load(filename)
     else:
         if os.path.isfile(filename): os.system('rm -rf '+filename)
         Vzmin = np.zeros(0)
     Nsrc2 = len(z)
     if len(Vzmin) != len(z):
-        print 'calculating Vzmin for '+filename
+        print('calculating Vzmin for '+filename)
         Vzmin   = np.zeros(Nsrc2)
         
         for i in range( 0, Nsrc2):
@@ -433,7 +433,7 @@ def get_Vzmin_old(z, L, fluxlim2, stype='Radio',filename='Vzmin.sav.npy', clobbe
 def get_Vzmin(z, L, fluxlim2, domega, zmin=0, stype='Radio',filename='Vzmin.sav.npy', clobber=False, rmsmap=None, completeness=None, verbose=False, savefile=True):
     
     if os.path.isfile(filename) and (not clobber):
-        print 'read Vzmin from '+filename
+        print('read Vzmin from '+filename)
         Vzmin = np.load(filename)
     else:
         if os.path.isfile(filename): os.system('rm -rf '+filename)
@@ -441,7 +441,7 @@ def get_Vzmin(z, L, fluxlim2, domega, zmin=0, stype='Radio',filename='Vzmin.sav.
         
     Nsrc2 = len(z)
     if len(Vzmin) != len(z):
-        print 'calculating Vzmin for '+filename
+        print('calculating Vzmin for '+filename)
         Vzmin   = np.zeros(Nsrc2)
         
         if (rmsmap is None) or (stype=='Optical'):
@@ -456,25 +456,25 @@ def get_Vzmin(z, L, fluxlim2, domega, zmin=0, stype='Radio',filename='Vzmin.sav.
                 #Vzmin[i] = cosmo.distance.comoving_volume(zm, **default_cosmo)
                 
             pool = mp.Pool(np.min((16,mp.cpu_count())))
-            Vzmin = np.array(pool.map(func_star_min, itertools.izip(range(Nsrc2), itertools.repeat([z,L,fluxlim2,stype]))))
+            Vzmin = np.array(pool.map(func_star_min, zip(list(range(Nsrc2)), itertools.repeat([z,L,fluxlim2,stype]))))
             Vzmin = domega*Vzmin
                 
         # handle the varying rms case
         else:
             if not isinstance(rmsmap, rmsmapz):
-                print "ERROR, rmsmap instance not initialised/passed properly"
+                print("ERROR, rmsmap instance not initialised/passed properly")
                 sys.exit(1)
             for i in range( 0, Nsrc2):
                 Vzmin[i] = rmsmap.vmin(zmin)
         if (completeness is not None) and (stype=='Radio'):
             if not isinstance(completeness, completenessf):
-                print "ERROR, completeness instance not initialised/passed properly"
+                print("ERROR, completeness instance not initialised/passed properly")
                 sys.exit(1)
             for i in range( 0, Nsrc2):
                 ft = RadioFlux(L[i], z[i], alpha=0.7)
                 #print completeness.get_val(ft)
                 if verbose:
-                    print ft, completeness.get_val(ft),  Vzmin[i], Vzmin[i]*completeness.get_val(ft)
+                    print(ft, completeness.get_val(ft),  Vzmin[i], Vzmin[i]*completeness.get_val(ft))
                 Vzmin[i] = Vzmin[i]*completeness.get_val(ft)
                 #Vzmin[i] = Vzmin[i]/completeness.get_val(ft)
                 
@@ -498,14 +498,14 @@ def get_zmin1(zi, Li, fluxlim2, stype):
 
 def get_zmin_mp(z, L, fluxlim2, stype='Radio',filename='zmin.sav.npy', clobber=False):
     if os.path.isfile(filename) and (not clobber):
-        print 'read zmin from '+filename
+        print('read zmin from '+filename)
         zmin = np.load(filename)
     else:
         if os.path.isfile(filename): os.system('rm -rf '+filename)
         zmin = np.zeros(0)
     Nsrc2 = len(z)
     if len(zmin) != len(z):
-        print 'calculating zmin for '+filename
+        print('calculating zmin for '+filename)
         pool = mp.Pool(np.min((16,mp.cpu_count())))
         results = [pool.apply_async(get_zmin1, args=(zi,Li,fluxlim2,stype)) for zi, Li in zip(z,L)]
         zmin =  [p.get() for p in results]
@@ -516,14 +516,14 @@ def get_zmin_mp(z, L, fluxlim2, stype='Radio',filename='zmin.sav.npy', clobber=F
 
 def get_zmin(z, L, fluxlim2, stype='Radio',filename='zmin.sav.npy', clobber=False):
     if os.path.isfile(filename) and (not clobber):
-        print 'read zmin from '+filename
+        print('read zmin from '+filename)
         zmin = np.load(filename)
     else:
         if os.path.isfile(filename): os.system('rm -rf '+filename)
         zmin = np.zeros(0)
     Nsrc2 = len(z)
     if len(zmin) != len(z):
-        print 'calculating zmin for '+filename
+        print('calculating zmin for '+filename)
         zmin   = np.zeros(Nsrc2)
         for i in range( 0, Nsrc2):
             zt = np.arange(z[i],-0.001,-0.001)
@@ -549,12 +549,12 @@ def get_LF(pbins, power, zmin, zmax, area, ind=None, verbose=True):
     Dimensions are volume per unit redshift per unit solid angle.
     Units are Mpc**3 Steradians^-1.
     '''
-    print "Calculating LF: {n} sources".format(n=len(power))
+    print("Calculating LF: {n} sources".format(n=len(power)))
     if ind is not None:
         power = power[ind]
         zmin = zmin[ind]
         zmax = zmax[ind]
-        print "sub-selected {n} sources".format(n=len(power))
+        print("sub-selected {n} sources".format(n=len(power)))
     
     # number of bins
     N_P_bins = len(pbins) - 1
@@ -583,10 +583,10 @@ def get_LF(pbins, power, zmin, zmax, area, ind=None, verbose=True):
             rhoerr[P_i] = np.sqrt(np.sum((1./vi)**2.))
             num[P_i]  =  float(len(sel_ind))
             if np.isnan(rho[P_i]):
-                print num
-                print vi
+                print(num)
+                print(vi)
         if verbose:
-            print "{p1:7.2f} < P <= {p2:6.2f} ({n:.0f}) : {rho:6.2e} +/- {rhoerr:6.2e}".format(p1=pbins[P_i], p2=pbins[P_i + 1], rho=rho[P_i], rhoerr=rhoerr[P_i], n=num[P_i])
+            print("{p1:7.2f} < P <= {p2:6.2f} ({n:.0f}) : {rho:6.2e} +/- {rhoerr:6.2e}".format(p1=pbins[P_i], p2=pbins[P_i + 1], rho=rho[P_i], rhoerr=rhoerr[P_i], n=num[P_i]))
             
     # per P bin
     rho = rho / dp
@@ -608,12 +608,12 @@ def get_rho_z(zbins, pbins, power, zmin, zmax, area, ind=None, verbose=True):
     Dimensions are volume per unit redshift per unit solid angle.
     Units are Mpc**3 Steradians^-1.
     '''
-    print "Calculating LF: {n} sources".format(n=len(power))
+    print("Calculating LF: {n} sources".format(n=len(power)))
     if ind is not None:
         power = power[ind]
         zmin = zmin[ind]
         zmax = zmax[ind]
-        print "sub-selected {n} sources".format(n=len(power))
+        print("sub-selected {n} sources".format(n=len(power)))
     
     # number of bins
     #N_P_bins = len(pbins) - 1
@@ -643,7 +643,7 @@ def get_rho_z(zbins, pbins, power, zmin, zmax, area, ind=None, verbose=True):
             rhoerr[P_i] = np.sqrt(np.sum((1./vi)**2.))
             num[P_i]  =  float(len(sel_ind))
         if verbose:
-            print "{p1:7.2f} < P <= {p2:6.2f} ({n:.0f}) : {rho:6.2e} +/- {rhoerr:6.2e}".format(p1=pbins[P_i], p2=pbins[P_i + 1], rho=rho[P_i], rhoerr=rhoerr[P_i], n=num[P_i])
+            print("{p1:7.2f} < P <= {p2:6.2f} ({n:.0f}) : {rho:6.2e} +/- {rhoerr:6.2e}".format(p1=pbins[P_i], p2=pbins[P_i + 1], rho=rho[P_i], rhoerr=rhoerr[P_i], n=num[P_i]))
             
     # per P bin
     rho = rho / dp
@@ -665,12 +665,12 @@ def get_CLF(pbins, power, zmin, zmax, area, ind=None, verbose=True):
     Dimensions are volume per unit redshift per unit solid angle.
     Units are Mpc**3 Steradians^-1.
     '''
-    print "Calculating CLF: {n} sources".format(n=len(power))
+    print("Calculating CLF: {n} sources".format(n=len(power)))
     if ind is not None:
         power = power[ind]
         zmin = zmin[ind]
         zmax = zmax[ind]
-        print "sub-selected {n} sources".format(n=len(power))
+        print("sub-selected {n} sources".format(n=len(power)))
     
     # number of bins
     N_P_bins = len(pbins) - 1
@@ -699,7 +699,7 @@ def get_CLF(pbins, power, zmin, zmax, area, ind=None, verbose=True):
             rhoerr[P_i] = np.sqrt(np.sum((1./vi)**2.))
             num[P_i]  =  float(len(sel_ind))
         if verbose:
-            print "{p1:7.2f} < P ({n:.0f}) : {rho:6.2e} +/- {rhoerr:6.2e}".format(p1=pbins[P_i], rho=rho[P_i], rhoerr=rhoerr[P_i], n=num[P_i])
+            print("{p1:7.2f} < P ({n:.0f}) : {rho:6.2e} +/- {rhoerr:6.2e}".format(p1=pbins[P_i], rho=rho[P_i], rhoerr=rhoerr[P_i], n=num[P_i]))
             
     # per P bin
     rho = rho 
@@ -727,14 +727,14 @@ def get_LF_f_areal(pbins_in, power, zmin, zmax, fcor, areal, area, ind=None, ver
     #print type(pbins)
     #print pbins_in
     #print type(pbins_in)
-    print "Calculating {s}F (f_areal): {n} sources".format(n=len(power),s=xstr)
+    print("Calculating {s}F (f_areal): {n} sources".format(n=len(power),s=xstr))
     if ind is not None:
         power = power[ind]
         zmin = zmin[ind]
         zmax = zmax[ind]
         fcor = fcor[ind]
         areal = areal[ind]
-        print "sub-selected {n} sources".format(n=len(power))
+        print("sub-selected {n} sources".format(n=len(power)))
     
     minpower = np.min(power)
     
@@ -780,7 +780,7 @@ def get_LF_f_areal(pbins_in, power, zmin, zmax, fcor, areal, area, ind=None, ver
             #print vi.min(), vi.max()#, vzmin
             #print np.sum(1./vi)#, vzmin
         if verbose:
-            print "{p1:7.2f} < {x} <= {p2:6.2f} ({n:.0f}) : {rho:6.2e} +/- {rhoerr:6.2e}".format(x=xstr, p1=pbins[P_i], p2=pbins[P_i + 1], rho=rho[P_i]/dp[P_i], rhoerr=rhoerr[P_i]/dp[P_i], n=num[P_i])
+            print("{p1:7.2f} < {x} <= {p2:6.2f} ({n:.0f}) : {rho:6.2e} +/- {rhoerr:6.2e}".format(x=xstr, p1=pbins[P_i], p2=pbins[P_i + 1], rho=rho[P_i]/dp[P_i], rhoerr=rhoerr[P_i]/dp[P_i], n=num[P_i]))
             
     # per P bin
     rho = rho / dp
@@ -809,14 +809,14 @@ def get_LF_rms_f_areal(pbins_in, power, Vzmin, Vzmax, fcor, areal, ind=None, ver
     #print type(pbins)
     #print pbins_in
     #print type(pbins_in)
-    print "Calculating {s}F (f_areal): {n} sources".format(n=len(power),s=xstr)
+    print("Calculating {s}F (f_areal): {n} sources".format(n=len(power),s=xstr))
     if ind is not None:
         power = power[ind]
         Vzmin = Vzmin[ind]
         Vzmax = Vzmax[ind]
         fcor = fcor[ind]
         areal = areal[ind]
-        print "sub-selected {n} sources".format(n=len(power))
+        print("sub-selected {n} sources".format(n=len(power)))
     
     minpower = np.min(power)
     
@@ -868,7 +868,7 @@ def get_LF_rms_f_areal(pbins_in, power, Vzmin, Vzmax, fcor, areal, ind=None, ver
                 #print Vzmax_h
                 #print Vzmin_h
         if verbose:
-            print "{p1:7.2f} < {x} <= {p2:6.2f} ({n:.0f}) : {rho:6.2e} +/- {rhoerr:6.2e}".format(x=xstr, p1=pbins[P_i], p2=pbins[P_i + 1], rho=rho[P_i]/dp[P_i], rhoerr=rhoerr[P_i]/dp[P_i], n=num[P_i])
+            print("{p1:7.2f} < {x} <= {p2:6.2f} ({n:.0f}) : {rho:6.2e} +/- {rhoerr:6.2e}".format(x=xstr, p1=pbins[P_i], p2=pbins[P_i + 1], rho=rho[P_i]/dp[P_i], rhoerr=rhoerr[P_i]/dp[P_i], n=num[P_i]))
             
     # per P bin
     rho = rho / dp
@@ -895,14 +895,14 @@ def get_CLF_f_areal(pbins, power, zmin, zmax, fcor, areal, domega, ind=None, ver
     Dimensions are volume per unit redshift per unit solid angle.
     Units are Mpc**3 Steradians^-1.
     '''
-    print "Calculating CLF (f_areal): {n} sources".format(n=len(power))
+    print("Calculating CLF (f_areal): {n} sources".format(n=len(power)))
     if ind is not None:
         power = power[ind]
         zmin = zmin[ind]
         zmax = zmax[ind]
         fcor = fcor[ind]
         areal = areal[ind]
-        print "sub-selected {n} sources".format(n=len(power))
+        print("sub-selected {n} sources".format(n=len(power)))
     
     minpower = np.min(power)
     
@@ -939,7 +939,7 @@ def get_CLF_f_areal(pbins, power, zmin, zmax, fcor, areal, domega, ind=None, ver
             rhoerr[P_i] = np.sqrt(np.sum((fcor_h/(areal_h*vi))**2.))
             num[P_i]  =  float(len(sel_ind))
         if verbose:
-            print "{x} > {p1:7.2f} ({n:.0f}) : {rho:6.2e} +/- {rhoerr:6.2e}".format(x=xstr, p1=pbins[P_i], rho=rho[P_i], rhoerr=rhoerr[P_i], n=num[P_i])
+            print("{x} > {p1:7.2f} ({n:.0f}) : {rho:6.2e} +/- {rhoerr:6.2e}".format(x=xstr, p1=pbins[P_i], rho=rho[P_i], rhoerr=rhoerr[P_i], n=num[P_i]))
             
     # per P bin - no, this is CLF
     rho = rho #/ dp
@@ -963,14 +963,14 @@ def get_rho_Plim_f_areal(plimit, power, zmin, zmax, fcor, areal, domega, ind=Non
     Dimensions are volume per unit redshift per unit solid angle.
     Units are Mpc**3 Steradians^-1.
     '''
-    print "Calculating density above power limit (f_areal): {n} sources".format(n=len(power))
+    print("Calculating density above power limit (f_areal): {n} sources".format(n=len(power)))
     if ind is not None:
         power = power[ind]
         zmin = zmin[ind]
         zmax = zmax[ind]
         fcor = fcor[ind]
         areal = areal[ind]
-        print "sub-selected {n} sources".format(n=len(power))
+        print("sub-selected {n} sources".format(n=len(power)))
     
     
     rho  = np.nan
@@ -979,7 +979,7 @@ def get_rho_Plim_f_areal(plimit, power, zmin, zmax, fcor, areal, domega, ind=Non
     
     minpower = np.min(power)
     if minpower > plimit:
-        print " missing sources between {p2:.2f} and {p1:.2f}".format(p1=minpower, p2=plimit)
+        print(" missing sources between {p2:.2f} and {p1:.2f}".format(p1=minpower, p2=plimit))
         return rho, rhoerr, num
         
     sel_ind = np.where( (power >= plimit)  )[0]
@@ -1000,7 +1000,7 @@ def get_rho_Plim_f_areal(plimit, power, zmin, zmax, fcor, areal, domega, ind=Non
         rhoerr = np.sqrt(np.sum((fcor_h/(areal_h*vi))**2.))
         num  =  float(len(sel_ind))
     if verbose:
-        print "{x} > {p1:7.2f} ({n:.0f}) : {rho:6.2e} +/- {rhoerr:6.2e}".format(x=xstr, p1=plimit, rho=rho, rhoerr=rhoerr, n=num)
+        print("{x} > {p1:7.2f} ({n:.0f}) : {rho:6.2e} +/- {rhoerr:6.2e}".format(x=xstr, p1=plimit, rho=rho, rhoerr=rhoerr, n=num))
             
     ## per P bin - nope this is > plimit
     #rho = rho #/ dp
@@ -1015,7 +1015,7 @@ def vmax_arr(m,z,mlim,area):
     '''
     N = len(m)
     if len(z) != N:
-        print 'mismatch in input array sizes, m and z must be same length'
+        print('mismatch in input array sizes, m and z must be same length')
         return
     Avmax = np.nan*np.zeros(N)
     for i in range(N):
@@ -1419,10 +1419,10 @@ def get_best_lf_model(z=0, model='1a', scalef=150.):
         fL = 0.14
         pass
     else:
-        print model + ' not supported'
+        print(model + ' not supported')
         return [np.nan], [np.nan]
     
-    print model
+    print(model)
         
         
         
@@ -1445,7 +1445,7 @@ def get_best_lf_model(z=0, model='1a', scalef=150.):
     else:
         zt = z
     
-    print z, zt
+    print(z, zt)
     
     if rhoevol:
         rho = rho*(1+zt)**eta

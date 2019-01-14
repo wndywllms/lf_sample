@@ -1,5 +1,5 @@
 import astropy.io.fits as pf
-from utils.fits_util import *
+#from utils.fits_util import *
 from astropy.table import Table, Column
 import LF_util
 import numpy as np
@@ -27,7 +27,7 @@ class lf_sample:
         
         self.savedir = savedir
         if not os.path.isdir(self.savedir):
-            print 'creating sample directory ',self.savedir
+            print('creating sample directory ',self.savedir)
             os.mkdir(self.savedir)
         #add trailing /
         if self.savedir[-1] != '/':
@@ -56,7 +56,7 @@ class lf_sample:
                 if self.domega != self.rmsmap.domega:
                     self.domega = self.rmsmap.domega
                     self.area = self.rmsmap.area
-                    print 'WARNING updating area, using {A:.3f} deg^2 from the rms map ({p:.3f})'.format(A=self.area, p=self.domega) 
+                    print('WARNING updating area, using {A:.3f} deg^2 from the rms map ({p:.3f})'.format(A=self.area, p=self.domega)) 
                 
             elif isinstance(rmsmap, str):
                 if os.path.exists(rmsmap):
@@ -66,12 +66,12 @@ class lf_sample:
                     if self.domega != self.rmsmap.domega:
                         self.domega = self.rmsmap.domega
                         self.area = self.rmsmap.area
-                        print 'WARNING updating area, using {A:.3f} deg^2 from the rms map ({p:.3f})'.format(A=self.area, p=self.domega) 
+                        print('WARNING updating area, using {A:.3f} deg^2 from the rms map ({p:.3f})'.format(A=self.area, p=self.domega)) 
                     
                 else:
-                    print "WARNING given rmsmap {map:s} does not exist, continuing without".format(map=rmsmap)
+                    print("WARNING given rmsmap {map:s} does not exist, continuing without".format(map=rmsmap))
             else:
-                print "WARNING given rmsmap type not understood, continuing without"
+                print("WARNING given rmsmap type not understood, continuing without")
             
             
         Vzlow = self.domega*acosmo.comoving_volume(self.zlim_low).value
@@ -87,9 +87,9 @@ class lf_sample:
                 if os.path.exists(completeness):
                     self.completeness = LF_util.completenessf(completeness)
                 else:
-                    print "WARNING given completeness {map:s} does not exist, continuing without".format(map=completeness)
+                    print("WARNING given completeness {map:s} does not exist, continuing without".format(map=completeness))
             else:
-                    print "WARNING given completeness type not understoof, continuing without".format(map=completeness)
+                    print("WARNING given completeness type not understoof, continuing without".format(map=completeness))
         
         
         self.radio_fluxlim_faint = radio_fluxlim_faint
@@ -135,7 +135,7 @@ class lf_sample:
         '''
         z_samples = []
         for i in range(len(zbins)):
-            print zbins[i][0], zbins[i][1]
+            print(zbins[i][0], zbins[i][1])
             z_sample_i = self.sub_z_sample('zbin{i:02d}'.format(i=i), zbins[i][0], zbins[i][1], forcecalc=forcecalc, savefiles=True)
 
             if plot:
@@ -149,7 +149,7 @@ class lf_sample:
                     if savelf:
                         np.savez('{ddir}{n:s}.npz'.format(ddir=self.savedir, n=z_sample_i.name),x=z_sample_i.LF_x, xerr=z_sample_i.LF_xerr, N=z_sample_i.LF_num,  y=z_sample_i.LF_rho, yerrup=z_sample_i.LF_rhoerrup, yerrlow=z_sample_i.LF_rhoerrlow)
                 elif dolf:
-                    print 'pbins is not set and dolf is on, please specify pbins'
+                    print('pbins is not set and dolf is on, please specify pbins')
 
                 
                 
@@ -170,7 +170,7 @@ class lf_sample:
         # handle no sources in selection
         if len(ind_z) == 0:
             return None
-        print 'subsample z : {n1} out of {n2} sources selected '.format(n1=len(ind_z),n2=len(self.cat))
+        print('subsample z : {n1} out of {n2} sources selected '.format(n1=len(ind_z),n2=len(self.cat)))
         new_self = self.sub_sample_ind(thisname+name, ind_z)
         
         new_self.zlim_low = zlow
@@ -196,7 +196,7 @@ class lf_sample:
         # handle no sources in selection
         if len(ind) == 0:
             return None
-        print 'subsample {n} : {n1} out of {n2} sources selected on field {f}'.format(n=name,n1=len(ind),n2=len(self.cat),f=field)
+        print('subsample {n} : {n1} out of {n2} sources selected on field {f}'.format(n=name,n1=len(ind),n2=len(self.cat),f=field))
         new_self = self.sub_sample_ind(name, ind)
         
         # calculate new zmin, zmax if needed
@@ -287,9 +287,9 @@ class lf_sample:
             haspower = True
         
         if haspower:
-            print "getting zmin zmax for radio-optical sample {n}".format(n=self.name)
+            print("getting zmin zmax for radio-optical sample {n}".format(n=self.name))
         else:
-            print "getting zmin zmax for optical sample {n}".format(n=self.name)
+            print("getting zmin zmax for optical sample {n}".format(n=self.name))
         
         #at what redshift does each source fall below the flux density limit?
         if haspower:
@@ -365,9 +365,9 @@ class lf_sample:
             haspower = True
         
         if haspower:
-            print "getting Vzmin Vzmax for radio-optical sample {n}".format(n=self.name)
+            print("getting Vzmin Vzmax for radio-optical sample {n}".format(n=self.name))
         else:
-            print "getting Vzmin Vzmax for optical sample {n}".format(n=self.name)
+            print("getting Vzmin Vzmax for optical sample {n}".format(n=self.name))
         
         #at what redshift does each source fall below the flux density limit?
         if haspower:
@@ -493,9 +493,9 @@ class lf_sample:
                         rhoerrlow[logp_radio_lf>=maskbins[1]] *= np.nan
                         rhoerrup[logp_radio_lf>=maskbins[1]] *= np.nan
                 else:
-                    print "maskbins invalid"
+                    print("maskbins invalid")
             else:
-                print "maskbins invalid"
+                print("maskbins invalid")
             
         #print '###', rhoerrup
         # add cosmic variance errors #
@@ -540,7 +540,7 @@ masscompleteness - mass(z) function describing the completeness envelope
         
         # select mass-complete #
         smenv_ind =  np.where(self.cat['smass'] >= masscompleteness(z=self.cat['z']))[0]  # Stellar mass cut #
-        print "{n1} of {n2} sources selected on SM envelope".format(n2=len(self.cat),n1= len(smenv_ind))
+        print("{n1} of {n2} sources selected on SM envelope".format(n2=len(self.cat),n1= len(smenv_ind)))
         sm_complete_sample = self.sub_sample_ind('m', smenv_ind )
         
         # zmax determined from mass-completeness also #

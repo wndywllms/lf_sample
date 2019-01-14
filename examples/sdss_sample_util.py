@@ -78,7 +78,7 @@ def select_good_sample(good=True):
     tt = np.load(CATPATH+'projects/sdss/non_dup_ind.npz')
     non_dup_ind = tt['ind']
 
-    print "read full sdss catalogue"
+    print("read full sdss catalogue")
     cat_sdss = Table.read(CATPATH+'projects/sdss/gal_fnal_dr7_v5_2.fit')
     #cat_sdss = Table.read(PATH+'projects/sdss/gal_fnal_dr7_v5_2.copy.fit')
     # cut out the duplicates
@@ -100,14 +100,14 @@ def select_good_sample(good=True):
 
 
     # The mass file
-    print "read full sdss sm catalogue"
+    print("read full sdss sm catalogue")
     cat_sdss_sm = Table.read(CATPATH+'projects/sdss/totlgm_dr7_v5_2b.fit')
     #cat_sdss_sm = Table.read(PATH+'projects/sdss/totlgm_dr7_v5_2.fit')
     cat_sdss_sm = cat_sdss_sm[non_dup_ind]
     cat_sdss_sm = cat_sdss_sm[selind_block]
 
     # The sfr file
-    print "read full sdss sfr catalogue"
+    print("read full sdss sfr catalogue")
     cat_sdss_sfr = Table.read(CATPATH+'projects/sdss/gal_totsfr_dr7_v5_2.fits')
     #cat_sdss_sfr = Table.read(PATH+'projects/sdss/totlgm_dr7_v5_2.fit')
     cat_sdss_sfr = cat_sdss_sfr[non_dup_ind]
@@ -117,7 +117,7 @@ def select_good_sample(good=True):
     #cat_sdss_sm1 = cat_sdss_sm.copy()
 
     # the redshift file
-    print "read full sdss z catalogue"
+    print("read full sdss z catalogue")
     cat_sdss_z = Table.read(CATPATH+'projects/sdss/gal_info_dr7_v5_2.fit')
     cat_sdss_z = cat_sdss_z[non_dup_ind]
     cat_sdss_z = cat_sdss_z[selind_block]
@@ -191,17 +191,13 @@ def select_good_radio_sample(good=True):
         # main_samp =1 included in main sample
         cat_sdss = cat_sdss[np.where(cat_sdss['main_samp']==1)]
         # mag limit below should be equivalent - should be based on the Petrosian r mag for DR7 (but doesn't quite match up...)
-        print len(cat_sdss)
         cat_sdss = cat_sdss[np.where((cat_sdss['z']> 0.01) & (cat_sdss['z']< 0.3))]
-        print len(cat_sdss)
 
         #### FLUX LIMIT ###
         cat_sdss = cat_sdss[np.where(cat_sdss['S_NVSS'] >= radiofluxlim)]   # radio flux limit
-        print len(cat_sdss)
 
         #### MAGNITUDE LIMITS ###
         cat_sdss = cat_sdss[np.where((cat_sdss['mag_r'] >= maglim_bright) & (cat_sdss['mag_r'] <= maglim_faint))]   # magnitude cut
-        print len(cat_sdss)
 
 
     # Redshift
