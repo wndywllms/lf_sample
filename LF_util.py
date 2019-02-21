@@ -1239,11 +1239,14 @@ def get_P(ttype='agn', f=150.):
     return x, y, np.array([yerru,yerrl])
 
 
-def get_mjh(ttype='agn'):
+def get_mjh(ttype='agn', zbin=None):
     if ttype == 'agn':
         f = os.path.join(MODPATH,'data/LFs/lofar-agn.txt')
     elif ttype =='sf':
-        f = os.path.join(MODPATH,'data/LFs/lofar-sf.txt')
+        if zbin is not None:
+            f = os.path.join(MODPATH,'data/LFs/lofar-sf-zbin{i:d}.txt'.format(i=zbin))
+        else:
+            f = os.path.join(MODPATH,'data/LFs/lofar-sf.txt')
     elif ttype == 'all':
         xA, yA, yerrA = get_mjh(ttype='agn')
         xS, yS, yerrS = get_mjh(ttype='sf')
@@ -1315,6 +1318,7 @@ def get_pracy_LF(ttype='all', f=150.):
 
 
 def get_best_lf_model(z=0, model='1a', scalef=150.):
+    '''from 2014MNRAS.445..955B'''
     dlogLrange = 0.1
     lLrange = np.arange(22.8, 28.5, dlogLrange)
     Lrange = 10**lLrange
@@ -1480,8 +1484,8 @@ def get_best_lf_model(z=0, model='1a', scalef=150.):
     return lLrange150, rho
 
 
-
 def get_best_lf(mode='local-all'):
+    '''from 2014MNRAS.445..955B'''
     lLrange = np.arange(23, 29, 0.01)
     Lrange = 10**lLrange
     lLrange150 = np.log10(Lrange*(150./1400)**-0.7)
