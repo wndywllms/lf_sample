@@ -129,23 +129,23 @@ class lf_sample:
         return lf_sample(name, cat, zlow=self.zlim_low, zhigh=self.zlim_high, radio_fluxlim_faint = self.radio_fluxlim_faint, opt_fluxlim_faint=self.opt_fluxlim_faint, opt_fluxlim_bright=self.opt_fluxlim_bright, domega=self.domega, rmsmap=self.rmsmap, completeness=self.completeness, savedir=self.savedir)
     
     
-    def make_z_samples(self, zbins, dolf=True, pbins=None, savelf=True, plot=False, forcecalc=False):
+    def make_z_samples(self, zbins, dolf=True, pbins=None, savelf=True, plot=False, forcecalc=False, ignoreMinPower=False, catcol='power'):
         '''make_z_samples(self, zbins, dolf=True, savelf=True, plot=False, forcecalc=False)
         make a set of samples over redshift bins
         '''
         z_samples = []
         for i in range(len(zbins)):
             print(zbins[i][0], zbins[i][1])
-            z_sample_i = self.sub_z_sample('zbin{i:02d}'.format(i=i), zbins[i][0], zbins[i][1], forcecalc=forcecalc, savefiles=True)
+            z_sample_i = self.sub_z_sample('zbin{i:02d}_{z1:.2f}_{z2:.2f}'.format(i=i, z1=zbins[i][0], z2=zbins[i][1]), zbins[i][0], zbins[i][1], forcecalc=forcecalc, savefiles=True, ignoreMinPower=ignoreMinPower)
 
             if plot:
-                z_sample_i.plot_Vzmin_Vzmax(keep=True)
-                z_sample_i.plot_Vzmin_Vzmax(keep=True, ccol='opt_mag', cbarlabel='$r$', saveext='rmag')
-                z_sample_i.plot_Vzmin_Vzmax(keep=True, ccol='opt_col', cbarlabel='$g-r$', saveext='col')
+                z_sample_i.plot_Vzmin_Vzmax(keep=True, catcol=catcol)
+                z_sample_i.plot_Vzmin_Vzmax(keep=True, ccol='opt_mag', cbarlabel='$r$', saveext='rmag', catcol=catcol)
+                z_sample_i.plot_Vzmin_Vzmax(keep=True, ccol='opt_col', cbarlabel='$g-r$', saveext='col', catcol=catcol)
 
             if z_sample_i is not None:
                 if dolf and pbins is not None:
-                    z_sample_i.compute_LF(pbins)
+                    z_sample_i.compute_LF(pbins, catcol=catcol)
                     if savelf:
                         np.savez('{ddir}{n:s}.npz'.format(ddir=self.savedir, n=z_sample_i.name),x=z_sample_i.LF_x, xerr=z_sample_i.LF_xerr, N=z_sample_i.LF_num,  y=z_sample_i.LF_rho, yerrup=z_sample_i.LF_rhoerrup, yerrlow=z_sample_i.LF_rhoerrlow)
                 elif dolf:
@@ -158,7 +158,7 @@ class lf_sample:
         return z_samples
     
     
-    def sub_z_sample(self, name, zlow, zhigh,forcecalc=False, savefiles=True, plot=False):
+    def sub_z_sample(self, name, zlow, zhigh,forcecalc=False, savefiles=True, plot=False, ignoreMinPower=False):
         ''' make a new subsample with name 'name' from the z range provided'''
         
         #new_self = self.copy()
@@ -241,22 +241,22 @@ class lf_sample:
         
         return
     
-    def plot_Vzmin_Vzmax(self, logV=True, vmin=0, vmax=1, keep=False, ccol='z', cbarlabel='$z$', saveext=''):
+    def plot_Vzmin_Vzmax(self, logV=True, vmin=0, vmax=1, keep=False, ccol='z', cbarlabel='$z$', saveext='', catcol='power'):
         
         fig=plt.figure()
         ax = fig.add_subplot(111)
         if 'Vzmax' in self.cat.dtype.names:
-            c = ax.scatter(self.cat['power'], self.cat['Vzmax'], c=self.cat[ccol], marker='v', s=20, edgecolor='none',label='Max')
+            c = ax.scatter(self.cat[catcol], self.cat['Vzmax'], c=self.cat[ccol], marker='v', s=20, edgecolor='none',label='Max')
         if 'PVzmax' in self.cat.dtype.names:
-            c = ax.scatter(self.cat['power'], self.cat['PVzmax'], c=self.cat[ccol], marker='v', s=10, edgecolor='none',label='Pmax')
+            c = ax.scatter(self.cat[catcol], self.cat['PVzmax'], c=self.cat[ccol], marker='v', s=10, edgecolor='none',label='Pmax')
         if 'PVzmin' in self.cat.dtype.names:
-            c = ax.scatter(self.cat['power'], self.cat['PVzmin'], c=self.cat[ccol], marker='^', s=10, edgecolor='none',label='Pmin')
+            c = ax.scatter(self.cat[catcol], self.cat['PVzmin'], c=self.cat[ccol], marker='^', s=10, edgecolor='none',label='Pmin')
         if 'OptVzmax' in self.cat.dtype.names:
-            c = ax.scatter(self.cat['power'], self.cat['OptVzmax'], c=self.cat[ccol], marker='1', s=10, edgecolor='none',label='Optmax')
+            c = ax.scatter(self.cat[catcol], self.cat['OptVzmax'], c=self.cat[ccol], marker='1', s=10, edgecolor='none',label='Optmax')
         if 'OptVzmin' in self.cat.dtype.names:
-            c = ax.scatter(self.cat['power'], self.cat['OptVzmin'], c=self.cat[ccol], marker='^', s=10, edgecolor='none',label='Optmin')
+            c = ax.scatter(self.cat[catcol], self.cat['OptVzmin'], c=self.cat[ccol], marker='^', s=10, edgecolor='none',label='Optmin')
         if 'Vzmin' in self.cat.dtype.names:
-            c = ax.scatter(self.cat['power'], self.cat['Vzmin'], c=self.cat[ccol], marker='2', s=20, edgecolor='none',label='Min')
+            c = ax.scatter(self.cat[catcol], self.cat['Vzmin'], c=self.cat[ccol], marker='2', s=20, edgecolor='none',label='Min')
         if logV:
             ax.semilogy()
         cbar=fig.colorbar(c)
@@ -466,17 +466,13 @@ class lf_sample:
     
     
     
-    def compute_LF(self, pgrid, maskbins=None, CV_f=None, ignoreMinPower=False):
+    def compute_LF(self, grid, maskbins=None, CV_f=None, ignoreMinPower=False, catcol='power'):
         
         
-        logp_radio_lf = (pgrid[:-1]+pgrid[1:])/2.
-        dlogp_radio_lf = (pgrid[1:]-pgrid[:-1])/2.
+        logp_radio_lf = (grid[:-1]+grid[1:])/2.
+        dlogp_radio_lf = (grid[1:]-grid[:-1])/2.
         
-        #print self.cat['power']
-        rho, rhoerr, num = LF_util.get_LF_rms_f_areal(pgrid, self.cat['power'], self.cat['Vzmin'], self.cat['Vzmax'], self.cat['Fcor'], self.cat['areal'], ignoreMinPower=ignoreMinPower)
-        #print self.cat['power']
-        #print pgrid
-        #print type(pgrid)
+        rho, rhoerr, num = LF_util.get_LF_rms_f_areal(grid, self.cat[catcol], self.cat['Vzmin'], self.cat['Vzmax'], self.cat['Fcor'], self.cat['areal'], ignoreMinPower=ignoreMinPower)
         
         rhoerrlow = rhoerr
         rhoerrup = rhoerr
@@ -559,8 +555,8 @@ masscompleteness - mass(z) function describing the completeness envelope
         
         
         #print self.cat['power']
-        #print pgrid
-        #print type(pgrid)
+        #print grid
+        #print type(grid)
         
         # fix lower errors to be rho #
         rhoerrlow = rhoerr
