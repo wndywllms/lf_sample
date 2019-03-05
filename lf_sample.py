@@ -171,7 +171,7 @@ class lf_sample:
         if len(ind_z) == 0:
             return None
         print('subsample z : {n1} out of {n2} sources selected '.format(n1=len(ind_z),n2=len(self.cat)))
-        new_self = self.sub_sample_ind(thisname+name, ind_z)
+        new_self = self.sub_sample_ind(thisname+'_'+name, ind_z)
         
         new_self.zlim_low = zlow
         new_self.zlim_high = zhigh
@@ -236,7 +236,7 @@ class lf_sample:
         plt.minorticks_on()
         plt.xlabel("power")
         plt.ylabel("z min/max")
-        plt.savefig('sample_zmax_zmin_{name}.png'.format(name=self.name))
+        plt.savefig('inspect_zmax_zmin_{name}.png'.format(name=self.name))
         plt.close(f)
         
         return
@@ -272,9 +272,9 @@ class lf_sample:
         ax.set_xlim(x1,x2)
         ax.set_ylabel("$V_{\mathrm{zmin/zmax}}$  [Mpc$^3$]")
         if saveext == '':
-            fig.savefig('{ddir}sample_Vzmax_Vzmin_{name}.png'.format(ddir=self.savedir, name=self.name))
+            fig.savefig('{ddir}{name}.inspect_Vzmax_Vzmin.png'.format(ddir=self.savedir, name=self.name))
         else:
-            fig.savefig('{ddir}sample_Vzmax_Vzmin_{s}_{name}.png'.format(ddir=self.savedir, name=self.name, s=saveext))
+            fig.savefig('{ddir}{name}.inspect_Vzmax_Vzmin_{s}.png'.format(ddir=self.savedir, name=self.name, s=saveext))
         if not keep:
             plt.close(fig)
         
@@ -293,9 +293,9 @@ class lf_sample:
         
         #at what redshift does each source fall below the flux density limit?
         if haspower:
-            Pzmax = LF_util.get_zmax(self.cat['z'], 10.**self.cat['power'], self.radio_fluxlim_faint, stype='Radio',filename='{ddir}zmax.radio.sav.{name}.npy'.format(ddir=self.savedir, name=self.name), clobber=0)
-        Optzmax = LF_util.get_zmax(self.cat['z'], self.cat['opt_lum'], self.opt_fluxlim_faint, stype='Optical',filename='{ddir}zmax.optical.sav.{name}.npy'.format(ddir=self.savedir, name=self.name), clobber=0)
-        Optzmin = LF_util.get_zmin(self.cat['z'], self.cat['opt_lum'], self.opt_fluxlim_bright, stype='Optical',filename='{ddir}zmin.optical.sav.{name}.npy'.format(ddir=self.savedir, name=self.name), clobber=0)
+            Pzmax = LF_util.get_zmax(self.cat['z'], 10.**self.cat['power'], self.radio_fluxlim_faint, stype='Radio',filename='{ddir}{name}.zmax.radio.sav.npy'.format(ddir=self.savedir, name=self.name), clobber=0)
+        Optzmax = LF_util.get_zmax(self.cat['z'], self.cat['opt_lum'], self.opt_fluxlim_faint, stype='Optical',filename='{ddir}{name}.zmax.optical.sav.npy'.format(ddir=self.savedir, name=self.name), clobber=0)
+        Optzmin = LF_util.get_zmin(self.cat['z'], self.cat['opt_lum'], self.opt_fluxlim_bright, stype='Optical',filename='{ddir}{name}.zmin.optical.sav.npy'.format(ddir=self.savedir, name=self.name), clobber=0)
 
         if haspower:
             if 'Pzmax' not in self.cat.dtype.names:
@@ -371,12 +371,12 @@ class lf_sample:
         
         #at what redshift does each source fall below the flux density limit?
         if haspower:
-            PVzmax = LF_util.get_Vzmax(self.cat['z'], 10.**self.cat['power'], self.radio_fluxlim_faint, self.domega, rmsmap=self.rmsmap, completeness=self.completeness, stype='Radio',filename='{ddir}Vzmax.radio.sav.{name}.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
+            PVzmax = LF_util.get_Vzmax(self.cat['z'], 10.**self.cat['power'], self.radio_fluxlim_faint, self.domega, rmsmap=self.rmsmap, completeness=self.completeness, stype='Radio',filename='{ddir}{name}.Vzmax.radio.sav.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
             ## argh, why???
             ##PVzmin = LF_util.get_Vzmin(self.cat['z'], 10.**self.cat['power'], self.radio_fluxlim_faint, self.domega, zmin=self.zlim_low, rmsmap=self.rmsmap, completeness=self.completeness, stype='Radio',filename='{ddir}Vzmin.radio.sav.{name}.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
             PVzmin = np.ones(len(self.cat)) * self.domega*acosmo.comoving_volume(self.zlim_low).value
-        OptVzmax = LF_util.get_Vzmax(self.cat['z'], self.cat['opt_lum'], self.opt_fluxlim_faint, self.domega, stype='Optical',filename='{ddir}Vzmax.optical.sav.{name}.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
-        OptVzmin = LF_util.get_Vzmin(self.cat['z'], self.cat['opt_lum'], self.opt_fluxlim_bright, self.domega, stype='Optical',filename='{ddir}Vzmin.optical.sav.{name}.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
+        OptVzmax = LF_util.get_Vzmax(self.cat['z'], self.cat['opt_lum'], self.opt_fluxlim_faint, self.domega, stype='Optical',filename='{ddir}{name}.Vzmax.optical.sav.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
+        OptVzmin = LF_util.get_Vzmin(self.cat['z'], self.cat['opt_lum'], self.opt_fluxlim_bright, self.domega, stype='Optical',filename='{ddir}{name}.Vzmin.optical.sav.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
         #import ipdb
         #if haspower:
             #if np.any(PVzmin >= PVzmax):
