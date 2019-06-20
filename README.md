@@ -5,7 +5,7 @@ Tools to compute LF for generic radio-optical catalogues:
 * `examples` directory contains 
 `use_lf_sample.py` : with some example code using lf_sample
 
-An `lf_sample` instance needs to be initilised minimally with an identifier and catalogue. The catalogue is a numpy record array with fields `z`, `power`, `opt_lum`. The example contains a catalogue utility function 
+An `lf_sample` instance needs to be initilised minimally with an identifier and catalogue. The catalogue is a astropy Table with fields `z`, `power`, `opt_lum`. The example contains a catalogue utility function 
 
 
 `lf_sample`  Routines:
