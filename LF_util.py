@@ -78,7 +78,10 @@ class rmsmapz(object):
         zvals=np.zeros_like(rvals)
         for i in range(len(rvals)):
             #print i,rvals[i]
-            zvals[i]=so.brentq(lambda z: RadioFlux(10**rvals[i],z,alpha)-1,0,100)
+            try:
+                zvals[i]=so.brentq(lambda z: LF_util.RadioFlux(10**rvals[i],z,alpha)-1,0,100)
+            except ValueError:
+                zvals[i]=100.
         self.get_zmax_interp=interp1d(rvals,zvals,kind='cubic', bounds_error=False, fill_value=(0,20))
         #self.get_zmax_interp=interp1d(rvals,zvals,kind='cubic')
 
