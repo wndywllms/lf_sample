@@ -18,13 +18,15 @@ warnings.filterwarnings("ignore")
 class lf_sample:
   
   
-    def __init__(self, name, cat, zlow=0, zhigh=20, radio_fluxlim_faint=np.nan, opt_fluxlim_faint=np.nan, opt_fluxlim_bright=np.nan, domega=np.nan, area=np.nan, rmsmap=None, completeness=None, savedir='./'):
+    def __init__(self, name, cat, zlow=0, zhigh=20, radio_fluxlim_faint=np.nan, opt_fluxlim_faint=np.nan, opt_fluxlim_bright=np.nan, domega=np.nan, area=np.nan, rmsmap=None, completeness=None, savedir=None):
         '''
         define the survey area either as:
             area - in square degrees!
             domega - is the faction of the full sky
         '''
         
+        if savedir is None:
+            savedir='lfdata_'+name
         self.savedir = savedir
         if not os.path.isdir(self.savedir):
             print('creating sample directory ',self.savedir)
