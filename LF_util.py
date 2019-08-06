@@ -264,7 +264,7 @@ def calc_stuff(i,args):
     z,L,fluxlim2,stype = args
     zt = np.arange(5,-0.001,-0.01) + z[i]
     if stype == 'Radio':
-        ft = RadioFlux(L[i], zt, alpha=0.7)
+        ft = RadioFlux(L[i], zt, alpha=-0.7)
     elif stype == 'Optical':
         ft = OpticalFlux(L[i], zt)
     zm = np.interp(fluxlim2, ft, zt)
@@ -277,7 +277,7 @@ def calc_stuff_min(i,args):
     z,L,fluxlim2,stype = args
     zt = np.arange(z[i],-0.001,-0.001)
     if stype == 'Radio':
-        ft = RadioFlux(L[i], zt, alpha=0.7)
+        ft = RadioFlux(L[i], zt, alpha=-0.7)
     elif stype == 'Optical':
         ft = OpticalFlux(L[i], zt)
     zm = np.interp(fluxlim2, ft, zt)
@@ -306,7 +306,7 @@ def get_Vzmax(z, L, fluxlim2, domega, stype='Radio',filename='Vzmax.sav.npy', cl
             #for i in range( 0, Nsrc2):
                 #zt = np.arange(5,-0.001,-0.01) + z[i]
                 #if stype == 'Radio':
-                    #ft = RadioFlux(L[i], zt, alpha=0.7)
+                    #ft = RadioFlux(L[i], zt, alpha=-0.7)
                 #elif stype == 'Optical':
                     #ft = OpticalFlux(L[i], zt)
                 #zm = np.interp(fluxlim2, ft, zt)
@@ -334,7 +334,7 @@ def get_Vzmax(z, L, fluxlim2, domega, stype='Radio',filename='Vzmax.sav.npy', cl
                 print("ERROR, completeness instance not initialised/passed properly")
                 sys.exit(1)
             for i in range( 0, Nsrc2):
-                ft = RadioFlux(L[i], z[i], alpha=0.7)
+                ft = RadioFlux(L[i], z[i], alpha=-0.7)
                 #print completeness.get_val(ft)
                 if verbose:
                     print(ft, completeness.get_val(ft),  Vzmax[i], Vzmax[i]*completeness.get_val(ft))
@@ -351,7 +351,7 @@ def get_Vzmax(z, L, fluxlim2, domega, stype='Radio',filename='Vzmax.sav.npy', cl
 def get_zmax1(zi, Li, fluxlim2, stype):
     zt = np.arange(5,-0.001,-0.01) + zi
     if stype == 'Radio':
-        ft = RadioFlux(Li, zt, alpha=0.7)
+        ft = RadioFlux(Li, zt, alpha=-0.7)
     elif stype == 'Optical':
         ft = OpticalFlux(Li, zt)
     zm = np.interp(fluxlim2, ft, zt)
@@ -394,7 +394,7 @@ def get_zmax(z, L, fluxlim2, stype='Radio',filename='zmax.sav.npy', clobber=Fals
         for i in range( 0, Nsrc2):
             zt = np.arange(5,-0.001,-0.01) + z[i]
             if stype == 'Radio':
-                ft = RadioFlux(L[i], zt, alpha=0.7)
+                ft = RadioFlux(L[i], zt, alpha=-0.7)
             elif stype == 'Optical':
                 ft = OpticalFlux(L[i], zt)
             zm = np.interp(fluxlim2, ft, zt)
@@ -421,7 +421,7 @@ def get_Vzmin_old(z, L, fluxlim2, stype='Radio',filename='Vzmin.sav.npy', clobbe
         for i in range( 0, Nsrc2):
             zt = np.arange(z[i],-0.001,-0.001)
             if stype == 'Radio':
-                ft = RadioFlux(L[i], zt, alpha=0.7)
+                ft = RadioFlux(L[i], zt, alpha=-0.7)
             elif stype == 'Optical':
                 ft = OpticalFlux(L[i], zt)
             zm = np.interp(fluxlim2, ft, zt)
@@ -451,7 +451,7 @@ def get_Vzmin(z, L, fluxlim2, domega, zmin=0, stype='Radio',filename='Vzmin.sav.
             #for i in range( 0, Nsrc2):
                 #zt = np.arange(z[i],-0.001,-0.001)
                 #if stype == 'Radio':
-                    #ft = RadioFlux(L[i], zt, alpha=0.7)
+                    #ft = RadioFlux(L[i], zt, alpha=-0.7)
                 #elif stype == 'Optical':
                     #ft = OpticalFlux(L[i], zt)
                 #zm = np.interp(fluxlim2, ft, zt)
@@ -474,7 +474,7 @@ def get_Vzmin(z, L, fluxlim2, domega, zmin=0, stype='Radio',filename='Vzmin.sav.
                 print("ERROR, completeness instance not initialised/passed properly")
                 sys.exit(1)
             for i in range( 0, Nsrc2):
-                ft = RadioFlux(L[i], z[i], alpha=0.7)
+                ft = RadioFlux(L[i], z[i], alpha=-0.7)
                 #print completeness.get_val(ft)
                 if verbose:
                     print(ft, completeness.get_val(ft),  Vzmin[i], Vzmin[i]*completeness.get_val(ft))
@@ -491,7 +491,7 @@ def get_Vzmin(z, L, fluxlim2, domega, zmin=0, stype='Radio',filename='Vzmin.sav.
 def get_zmin1(zi, Li, fluxlim2, stype):
     zt = np.arange(zi,-0.001,-0.001)
     if stype == 'Radio':
-        ft = RadioFlux(Li, zt, alpha=0.7)
+        ft = RadioFlux(Li, zt, alpha=-0.7)
     elif stype == 'Optical':
         ft = OpticalFlux(Li, zt)
     zm = np.interp(fluxlim2, ft, zt)
@@ -531,7 +531,7 @@ def get_zmin(z, L, fluxlim2, stype='Radio',filename='zmin.sav.npy', clobber=Fals
         for i in range( 0, Nsrc2):
             zt = np.arange(z[i],-0.001,-0.001)
             if stype == 'Radio':
-                ft = RadioFlux(L[i], zt, alpha=0.7)
+                ft = RadioFlux(L[i], zt, alpha=-0.7)
             elif stype == 'Optical':
                 ft = OpticalFlux(L[i], zt)
             zm = np.interp(fluxlim2, ft, zt)
