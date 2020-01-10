@@ -32,6 +32,71 @@ def mp_vax(arg, **kwarg):
     return rmsmap.vmax(*arg, **kwarg)
     
 
+class rmsmapz_old(object):
+    def __init__(self,map,sampling=100):
+        # map is a 2D nan-blanked FITS array as produced by PyBDSF
+        hdu=fits.open(map)
+        self.data=hdu[0].data
+        self.sampling=sampling
+        self.min=np.nanmin(self.data)
+        self.max=np.nanmax(self.data)
+        #print self.min,self.max
+        self.bins=np.logspace(np.log10(self.min),np.log10(self.max),sampling+1)
+        self.centres=0.5*(self.bins[:-1]+self.bins[1:])
+        cdata=self.data[~np.isnan(self.data)]
+        self.hist=np.asfarray(np.histogram(cdata,self.bins)[0])/len(cdata)
+        self.area=len(cdata)*hdu[0].header['CDELT1']**2.0 # in sq. deg
+        
+        degtost = (180./np.pi)**2.  # sq degrees to steradians 
+        self.area_sr= self.area/degtost
+        self.domega=self.area_sr / (4.*np.pi)
+        print('Read',map,'area is {:.3f} deg^2'.format(self.area))
+        print('Read',map,'area is {:.3f} percent of sky'.format(self.domega))
+
+    def vmax(self,zmax,L):
+        # compute the Smolcic Ak*V_max(L,rms_k) sum
+        vm = self.domega*self.get_vmax(L,self.centres)
+        return np.sum(self.hist*vm)
+
+    def vmin(self,zmin,L):
+        # compute the Smolcic Ak*V_max(L,rms_k) sum
+        #DL = acosmo.luminosity_distance(zmin).value
+        #vc = (4.*np.pi/3.)*(DL/(1.+zmin))**3.  # volume at zlim
+        #vmax = domega*vc
+        #vm = cosmo.distance.comoving_volume(zmin, **default_cosmo)
+        vm = self.domega*acosmo.comoving_volume(zmin).value
+        return np.sum(self.hist*vm)
+    
+    def interp_setup(self,Lmin,Lmax,factor,alpha=-0.7):
+        # we solve in terms of r = L/(factor*rms)
+        self.factor=factor
+        self.alpha=alpha
+        rmin=Lmin/(factor*self.max)
+        rmax=Lmax/(factor*self.min)
+        print('Using r range {:.2e} to {:.2e}'.format(rmin,rmax))
+        rvals=np.linspace(np.log10(rmin),np.log10(rmax),self.sampling)
+        zvals=np.zeros_like(rvals)
+        for i in range(len(rvals)):
+            #print i,rvals[i]
+            try:
+                zvals[i]=so.brentq(lambda z: RadioFlux(10**rvals[i],z,alpha)-1,0,100)
+            except ValueError:
+                zvals[i]=100.
+        self.get_zmax_interp=interp1d(rvals,zvals,kind='cubic', bounds_error=False, fill_value=(0,20))
+        #self.get_zmax_interp=interp1d(rvals,zvals,kind='cubic')
+
+    def get_vmax(self,L,rms):
+        # uses interpolation so can work with array-like rms
+        #print np.log10(L/(rms*self.factor)), np.min(self.get_zmax_interp.x), np.max(self.get_zmax_interp.x)
+        zlim=self.get_zmax_interp(np.log10(L/(rms*self.factor)))
+
+        #DL = acosmo.luminosity_distance(zlim).value
+        #vc = (4.*np.pi/3.)*(DL/(1.+zlim))**3.  # volume at zlim
+        #vmax = domega*vc
+        vmax = acosmo.comoving_volume(zlim).value
+        #vmax = cosmo.distance.comoving_volume(zlim, **default_cosmo)
+        return vmax
+    
 class rmsmapz(object):
     def __init__(self,map,sampling=100):
         # map is a 2D nan-blanked FITS array as produced by PyBDSF
@@ -53,19 +118,51 @@ class rmsmapz(object):
         print('Read',map,'area is {:.3f} deg^2'.format(self.area))
         print('Read',map,'area is {:.3f} percent of sky'.format(self.domega))
 
-    def vmax(self,L):
-        # compute the Smolcic Ak*V_max(L,rms_k) sum
-        vm = self.domega*self.get_vmax(L,self.centres)
-        return np.sum(self.hist*vm)
+    #def vmax(self,L):
+        ## compute the Smolcic Ak*V_max(L,rms_k) sum
+        #vm = self.domega*self.get_vmax(L,self.centres)
+        #return np.sum(self.hist*vm)
 
-    def vmin(self,zmin):
+
+    def vmax(self,zmax,L):
         # compute the Smolcic Ak*V_max(L,rms_k) sum
-        #DL = acosmo.luminosity_distance(zmin).value
-        #vc = (4.*np.pi/3.)*(DL/(1.+zmin))**3.  # volume at zlim
-        #vmax = domega*vc
-        #vm = cosmo.distance.comoving_volume(zmin, **default_cosmo)
-        vm = self.domega*acosmo.comoving_volume(zmin).value
+        vm_max = self.domega*acosmo.comoving_volume(zmax).value
+        vm = self.domega*self.get_vmax(L,self.centres) # max vol per rms slice
+        vm[vm>=vm_max] = vm_max   # maxes out at vm_max  ### TESTING
         return np.sum(self.hist*vm)
+    
+    #def vmax(self,z,L):
+        ## compute the Smolcic Ak*V_max(L,rms_k) sum
+        ##DL = acosmo.luminosity_distance(zmin).value
+        ##vc = (4.*np.pi/3.)*(DL/(1.+zmin))**3.  # volume at zlim
+        ##vmax = domega*vc
+        ##vm = cosmo.distance.comoving_volume(zmin, **default_cosmo)
+        ##import ipdb; ipdb.set_trace()
+        #Flux = RadioFlux(L,z,alpha=-0.7)
+        #Af = np.sum(self.hist[ self.centres  < Flux/self.factor])  ## fraction of map where this source is detectable at the lower z limit
+        #vm = Af*self.domega*acosmo.comoving_volume(z).value
+        #return np.sum(self.hist*vm)
+
+    def vmin(self,zmin,L):
+        # compute the Smolcic Ak*V_max(L,rms_k) sum
+        vm_min = self.domega*acosmo.comoving_volume(zmin).value
+        vm = self.domega*self.get_vmax(L,self.centres)  # max vol per rms slice
+        vm[vm>=vm_min] = vm_min    # vmin can't exceed vmax for a given rms value
+        
+        ##vm = vm_min    ### TESTING
+        return np.sum(self.hist*vm)
+    
+    #def vmin(self,zmin,z,L):
+        ## compute the Smolcic Ak*V_max(L,rms_k) sum
+        ##DL = acosmo.luminosity_distance(zmin).value
+        ##vc = (4.*np.pi/3.)*(DL/(1.+zmin))**3.  # volume at zlim
+        ##vmax = domega*vc
+        ##vm = cosmo.distance.comoving_volume(zmin, **default_cosmo)
+        ##import ipdb; ipdb.set_trace()
+        #Flux = RadioFlux(L,z,alpha=-0.7)
+        #Af = np.sum(self.hist[ self.centres  < Flux/self.factor])  ## fraction of map where this source is detectable at the lower z limit
+        #vm = Af*self.domega*acosmo.comoving_volume(zmin).value
+        #return np.sum(self.hist*vm)
     
     def interp_setup(self,Lmin,Lmax,factor,alpha=-0.7):
         # we solve in terms of r = L/(factor*rms)
@@ -287,7 +384,7 @@ def calc_stuff_min(i,args):
     return Vzmin
     
     
-def get_Vzmax(z, L, fluxlim2, domega, stype='Radio',filename='Vzmax.sav.npy', clobber=False, rmsmap=None, completeness=None, verbose=False, savefile=True):
+def get_Vzmax(z, L, fluxlim2, domega, zmax=10., stype='Radio',filename='Vzmax.sav.npy', clobber=False, rmsmap=None, completeness=None, verbose=False, savefile=True):
     
     
     if os.path.isfile(filename) and (not clobber):
@@ -324,7 +421,8 @@ def get_Vzmax(z, L, fluxlim2, domega, stype='Radio',filename='Vzmax.sav.npy', cl
                 print("ERROR, rmsmap instance not initialised/passed properly")
                 sys.exit(1)
             for i in range( 0, Nsrc2):
-                Vzmax[i] = rmsmap.vmax(L[i])
+                #import ipdb; ipdb.set_trace()
+                Vzmax[i] = rmsmap.vmax(zmax,L[i])
                 #print 'test pool1'
                 #pool = mp.Pool(np.min((16,mp.cpu_count())))
                 #Vzmax = np.array(pool.map(mp_vax, itertools.izip(itertools.repeat(rmsmap), L)   ))
@@ -447,7 +545,7 @@ def get_Vzmin(z, L, fluxlim2, domega, zmin=0, stype='Radio',filename='Vzmin.sav.
         print('calculating Vzmin for '+filename)
         Vzmin   = np.zeros(Nsrc2)
         
-        if (rmsmap is None) or (stype=='Optical'):
+        if (rmsmap is None):
             #for i in range( 0, Nsrc2):
                 #zt = np.arange(z[i],-0.001,-0.001)
                 #if stype == 'Radio':
@@ -458,17 +556,29 @@ def get_Vzmin(z, L, fluxlim2, domega, zmin=0, stype='Radio',filename='Vzmin.sav.
                 ##Vzmin[i] = zm
                 #Vzmin[i] = cosmo.distance.comoving_volume(zm, **default_cosmo)
                 
-            pool = mp.Pool(np.min((16,mp.cpu_count())))
-            Vzmin = np.array(pool.map(func_star_min, zip(list(range(Nsrc2)), itertools.repeat([z,L,fluxlim2,stype]))))
-            Vzmin = domega*Vzmin
+            if np.isfinite(fluxlim2):
+                
+                pool = mp.Pool(np.min((16,mp.cpu_count())))
+                Vzmin = np.array(pool.map(func_star_min, zip(list(range(Nsrc2)), itertools.repeat([z,L,fluxlim2,stype]))))
+                Vzmin = domega*Vzmin
+            else:
+                Vzmin = np.zeros(Nsrc2)
+                
+                
+            Vzmin_lim = domega*acosmo.comoving_volume(zmin).value * np.ones(Nsrc2)
+            
+            Vzmin = np.maximum(Vzmin, Vzmin_lim)
+            
                 
         # handle the varying rms case
         else:
             if not isinstance(rmsmap, rmsmapz):
-                print("ERROR, rmsmap instance not initialised/passed properly")
+                print("ERROR, rmsmap instance not initialised/passed properly, using zlim")
                 sys.exit(1)
-            for i in range( 0, Nsrc2):
-                Vzmin[i] = rmsmap.vmin(zmin)
+            else:
+                for i in range( 0, Nsrc2):
+                    Vzmin[i] = rmsmap.vmin(zmin,L[i])
+                
         if (completeness is not None) and (stype=='Radio'):
             if not isinstance(completeness, completenessf):
                 print("ERROR, completeness instance not initialised/passed properly")
@@ -479,8 +589,6 @@ def get_Vzmin(z, L, fluxlim2, domega, zmin=0, stype='Radio',filename='Vzmin.sav.
                 if verbose:
                     print(ft, completeness.get_val(ft),  Vzmin[i], Vzmin[i]*completeness.get_val(ft))
                 Vzmin[i] = Vzmin[i]*completeness.get_val(ft)
-                #Vzmin[i] = Vzmin[i]/completeness.get_val(ft)
-                
         if savefile:    
             np.save(filename, (Vzmin))
         

@@ -1,24 +1,26 @@
-import astropy.io.fits as pf
-#from utils.fits_util import *
-from astropy.table import Table, Column
-import LF_util
-import numpy as np
-import matplotlib.pyplot as plt
 import os
 import sys
 
+import numpy as np
+import matplotlib.pyplot as plt
+
+import warnings
+warnings.filterwarnings("ignore")
+
+import astropy.io.fits as pf
+#from utils.fits_util import *
+from astropy.table import Table, Column
 from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
 acosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
-import warnings
-warnings.filterwarnings("ignore")
+from . import util as LF_util
 
 
 class lf_sample:
   
   
-    def __init__(self, name, cat, zlow=0, zhigh=20, radio_fluxlim_faint=np.nan, opt_fluxlim_faint=np.nan, opt_fluxlim_bright=np.nan, domega=np.nan, area=np.nan, rmsmap=None, completeness=None, savedir=None):
+    def __init__(self, name, cat, zlow=0, zhigh=20, radio_fluxlim_faint=np.nan, radio_fluxlim_bright=np.nan, opt_fluxlim_faint=np.nan, opt_fluxlim_bright=np.nan, domega=np.nan, area=np.nan, rmsmap=None, completeness=None, savedir=None):
         '''
         define the survey area either as:
             area - in square degrees!
@@ -95,6 +97,7 @@ class lf_sample:
         
         
         self.radio_fluxlim_faint = radio_fluxlim_faint
+        self.radio_fluxlim_bright = radio_fluxlim_bright
         self.opt_fluxlim_faint = opt_fluxlim_faint
         self.opt_fluxlim_bright = opt_fluxlim_bright
     
@@ -125,10 +128,10 @@ class lf_sample:
         return
     
     def copy(self):
-        return lf_sample(self.name, self.cat, zlow=self.zlim_low, zhigh=self.zlim_high, radio_fluxlim_faint=self.radio_fluxlim_faint, opt_fluxlim_faint=self.opt_fluxlim_faint, opt_fluxlim_bright=self.opt_fluxlim_bright, domega=self.domega, rmsmap=self.rmsmap, completeness=self.completeness, savedir=self.savedir)
+        return lf_sample(self.name, self.cat, zlow=self.zlim_low, zhigh=self.zlim_high, radio_fluxlim_faint=self.radio_fluxlim_faint, radio_fluxlim_bright=self.radio_fluxlim_bright, opt_fluxlim_faint=self.opt_fluxlim_faint, opt_fluxlim_bright=self.opt_fluxlim_bright, domega=self.domega, rmsmap=self.rmsmap, completeness=self.completeness, savedir=self.savedir)
     
     def copy_subcat(self, name, cat):
-        return lf_sample(name, cat, zlow=self.zlim_low, zhigh=self.zlim_high, radio_fluxlim_faint = self.radio_fluxlim_faint, opt_fluxlim_faint=self.opt_fluxlim_faint, opt_fluxlim_bright=self.opt_fluxlim_bright, domega=self.domega, rmsmap=self.rmsmap, completeness=self.completeness, savedir=self.savedir)
+        return lf_sample(name, cat, zlow=self.zlim_low, zhigh=self.zlim_high, radio_fluxlim_faint = self.radio_fluxlim_faint, radio_fluxlim_bright=self.radio_fluxlim_bright, opt_fluxlim_faint=self.opt_fluxlim_faint, opt_fluxlim_bright=self.opt_fluxlim_bright, domega=self.domega, rmsmap=self.rmsmap, completeness=self.completeness, savedir=self.savedir)
     
     
     def make_z_samples(self, zbins, dolf=True, pbins=None, savelf=True, plot=False, forcecalc=False, ignoreMinPower=False, catcol='power'):
@@ -143,7 +146,10 @@ class lf_sample:
             if plot:
                 z_sample_i.plot_Vzmin_Vzmax(keep=True, catcol=catcol)
                 z_sample_i.plot_Vzmin_Vzmax(keep=True, ccol='opt_mag', cbarlabel='$r$', saveext='rmag', catcol=catcol)
-                z_sample_i.plot_Vzmin_Vzmax(keep=True, ccol='opt_col', cbarlabel='$g-r$', saveext='col', catcol=catcol)
+                try:
+                    z_sample_i.plot_Vzmin_Vzmax(keep=True, ccol='opt_col', cbarlabel='$g-r$', saveext='col', catcol=catcol)
+                except:
+                    print('cant plot colour: opt_col not present')
 
             if z_sample_i is not None:
                 if dolf and pbins is not None:
@@ -373,10 +379,10 @@ class lf_sample:
         
         #at what redshift does each source fall below the flux density limit?
         if haspower:
-            PVzmax = LF_util.get_Vzmax(self.cat['z'], 10.**self.cat['power'], self.radio_fluxlim_faint, self.domega, rmsmap=self.rmsmap, completeness=self.completeness, stype='Radio',filename='{ddir}{name}.Vzmax.radio.sav.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
+            PVzmax = LF_util.get_Vzmax(self.cat['z'], 10.**self.cat['power'], self.radio_fluxlim_faint, self.domega, zmax=self.zlim_high, rmsmap=self.rmsmap, completeness=self.completeness, stype='Radio',filename='{ddir}{name}.Vzmax.radio.sav.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
             ## argh, why???
-            ##PVzmin = LF_util.get_Vzmin(self.cat['z'], 10.**self.cat['power'], self.radio_fluxlim_faint, self.domega, zmin=self.zlim_low, rmsmap=self.rmsmap, completeness=self.completeness, stype='Radio',filename='{ddir}Vzmin.radio.sav.{name}.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
-            PVzmin = np.ones(len(self.cat)) * self.domega*acosmo.comoving_volume(self.zlim_low).value
+            PVzmin = LF_util.get_Vzmin(self.cat['z'], 10.**self.cat['power'], self.radio_fluxlim_bright, self.domega, zmin=self.zlim_low, rmsmap=self.rmsmap, completeness=self.completeness, stype='Radio',filename='{ddir}{name}.Vzmin.radio.sav.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
+            #PVzmin = np.ones(len(self.cat)) * self.domega*acosmo.comoving_volume(self.zlim_low).value
         OptVzmax = LF_util.get_Vzmax(self.cat['z'], self.cat['opt_lum'], self.opt_fluxlim_faint, self.domega, stype='Optical',filename='{ddir}{name}.Vzmax.optical.sav.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
         OptVzmin = LF_util.get_Vzmin(self.cat['z'], self.cat['opt_lum'], self.opt_fluxlim_bright, self.domega, stype='Optical',filename='{ddir}{name}.Vzmin.optical.sav.npy'.format(ddir=self.savedir, name=self.name), clobber=forcecalc, savefile=savefiles)
         #import ipdb
@@ -423,9 +429,12 @@ class lf_sample:
         Vzmin = Vzlim_low*np.ones(len(OptVzmin))
         if haspower:
             ### Combine Vzmin's from radio, optical and z selections
-            Vzmin = Vzlim_low*np.ones(len(OptVzmax))
-            t1 = np.maximum(Vzmin, PVzmin)
-            t2 = np.maximum(t1, OptVzmin)
+            #Vzmin = Vzlim_low*np.ones(len(OptVzmax))
+            #t1 = np.maximum(Vzmin, PVzmin)
+            #t2 = np.maximum(t1, OptVzmin)
+            #Vzmin = Vzlim_low*np.ones(len(OptVzmax))
+            #t1 = np.maximum(Vzmin, PVzmin)
+            t2 = np.maximum(PVzmin, OptVzmin)
             Vzmin = t2
             
         else:
