@@ -9,10 +9,11 @@ import scipy.optimize as so
 from scipy.interpolate import interp1d
 from astropy.table import Table
 from astropy.io import fits
-from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
-acosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-
+#from astropy.cosmology import FlatLambdaCDM
+#acosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+from astropy.cosmology import LambdaCDM
+acosmo = LambdaCDM(H0=70, Om0=0.3, Ode0=0.7)
 
 MODPATH = os.path.dirname(__file__)
 
