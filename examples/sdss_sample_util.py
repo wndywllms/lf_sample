@@ -1,4 +1,4 @@
-import LF_util
+from radio_lf import util as LF_util
 import numpy as np
 from astropy.table import Table, MaskedColumn
 
