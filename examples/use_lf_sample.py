@@ -1,6 +1,6 @@
 import sdss_sample_util
-import lf_sample
-import LF_util
+from radio_lf import sample as lf_sample
+from radio_lf import util as LF_util
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
