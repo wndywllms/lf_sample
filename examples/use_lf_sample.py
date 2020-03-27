@@ -1,7 +1,7 @@
 import sdss_sample_util
 from radio_lf import sample as lf_sample
 from radio_lf import util as LF_util
-from radio_lf import models as lf_mod
+from radio_lf import model as lf_mod
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
