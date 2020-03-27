@@ -1,6 +1,7 @@
 import sdss_sample_util
 from radio_lf import sample as lf_sample
 from radio_lf import util as LF_util
+from radio_lf import models as lf_mod
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -63,13 +64,13 @@ l = ax.errorbar(low_z_agn_sample.LF_x, low_z_agn_sample.LF_rho, [low_z_agn_sampl
 ee.append(l)
 
 ee2 = []
-x,y, yerr =  LF_util.get_BH(ttype='all', f=1400.)
+x,y, yerr =  lf_mod.get_BH(ttype='all', f=1400.)
 l = ax.errorbar(x,y,yerr, label='BH ALL') 
 ee2.append(l)
-x,y, yerr =  LF_util.get_BH(ttype='sf', f=1400.)
+x,y, yerr =  lf_mod.get_BH(ttype='sf', f=1400.)
 l = ax.errorbar(x,y,yerr, label='BH SF') 
 ee2.append(l)
-x,y, yerr =  LF_util.get_BH(ttype='agn', f=1400.)
+x,y, yerr =  lf_mod.get_BH(ttype='agn', f=1400.)
 l = ax.errorbar(x,y,yerr, label='BH AGN') 
 ee2.append(l)
 
@@ -107,13 +108,13 @@ l = ax.errorbar(low_z_lerg_sample.LF_x, low_z_lerg_sample.LF_rho, [low_z_lerg_sa
 ee.append(l)
 
 ee2 = []
-x,y, yerr =  LF_util.get_BH(ttype='agn', f=1400.)
+x,y, yerr =  lf_mod.get_BH(ttype='agn', f=1400.)
 l = ax.errorbar(x,y,yerr, label='BH AGN') 
 ee2.append(l)
-x,y, yerr =  LF_util.get_BH(ttype='herg', f=1400.)
+x,y, yerr =  lf_mod.get_BH(ttype='herg', f=1400.)
 l = ax.errorbar(x,y,yerr, label='BH HERG') 
 ee2.append(l)
-x,y, yerr =  LF_util.get_BH(ttype='lerg', f=1400.)
+x,y, yerr =  lf_mod.get_BH(ttype='lerg', f=1400.)
 l = ax.errorbar(x,y,yerr, label='BH LERG') 
 ee2.append(l)
 
