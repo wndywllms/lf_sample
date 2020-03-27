@@ -233,7 +233,7 @@ kwargs
     # flux in Jy to Power in W/Hz
     #DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
     DL = acosmo.luminosity_distance(z).value   # in Mpc
-    A = (4.*np.pi*(DL*3.08667758e22)**2.)      # in SI (m^2)
+    A = (4.*np.pi*(DL**2.)*(3.08667758e22**2.))      # in SI (m^2)
     S = Flux*1.e-26                            # kg /s^2
     power = (S*A) / ((1. + z)**(1.+alpha))
     return power
@@ -243,7 +243,7 @@ def RadioFlux (power, z, alpha=-0.7):
     # function to calculate flux density given in Jy some radio power
     #DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
     DL = acosmo.luminosity_distance(z).value
-    A = (4.*np.pi*(DL*3.08667758e22)**2.)      # in SI (m^2)
+    A = (4.*np.pi*(DL**2.)*(3.08667758e22**2.))      # in SI (m^2)
     Flux = (power  / A) *((1. + z)**(1.+alpha) )
     S = 1e26* Flux   # in Jy
     return S
@@ -253,7 +253,7 @@ def OpticalLuminosity(Flux, z):
     #DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
     S = Flux*1.e-26                            # kg /s^2
     DL = acosmo.luminosity_distance(z).value
-    A = (4.*np.pi*(DL*3.08667758e22)**2.)      # in SI (m^2)
+    A = (4.*np.pi*(DL**2.)*(3.08667758e22**2.))      # in SI (m^2)
     luminosity = S*A*(1. + z)
     return luminosity
 
@@ -261,7 +261,7 @@ def OpticalFlux (luminosity, z):
     # function to calculate flux density given some optical luminosity
     #DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
     DL = acosmo.luminosity_distance(z).value
-    A = (4.*np.pi*(DL*3.08667758e22)**2.)      # in SI (m^2)
+    A = (4.*np.pi*(DL**2.)*(3.08667758e22**2.))      # in SI (m^2)
     S = luminosity / ( A*(1. + z) )
     Flux = S*1e26                  # to Jy
     return Flux
@@ -271,7 +271,7 @@ def OpticalLuminosity2(Flux, z, alpha):
     # flux in W/Hz/m^2 to luminosity in W/Hz
     #DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
     DL = acosmo.luminosity_distance(z).value
-    A = (4.*np.pi*(DL*3.08667758e22)**2.)      # in SI (m^2)
+    A = (4.*np.pi*(DL**2.)*(3.08667758e22**2.))      # in SI (m^2)
     luminosity = Flux*A*(1. + z)**(1.+alpha)
     return luminosity
 
@@ -286,7 +286,7 @@ def XrayLuminosity(Flux, z):
     # flux in W/m^2 to luminosity in W
     #DL = cosmo.distance.luminosity_distance(z, **default_cosmo)
     DL = acosmo.luminosity_distance(z).value
-    luminosity = Flux*(4.*np.pi*DL**2.)*(3.08667758e22**2.)  #*(1. + z) these are X-ray bolometric
+    luminosity = Flux*4.*np.pi*(DL**2.)*(3.08667758e22**2.)  #*(1. + z) these are X-ray bolometric
     luminosity = luminosity*1e7  # W -> erg/s
     return luminosity
 
