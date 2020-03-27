@@ -1,4 +1,4 @@
-# lf_sample
+# radio_lf
 
 Tools to compute LF for generic radio-optical catalogues:
 
@@ -22,3 +22,6 @@ An `sample` instance needs to be initilised minimally with an identifier and cat
 `util`  Routines:
 
 * `get_LF_f_areal` - compute LF for given power bins, power, zmin, zmax, fcor, areal, area
+
+# to install
+run `python setup.py install --user`
