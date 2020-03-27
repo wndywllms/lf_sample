@@ -1,5 +1,8 @@
+import os
 from astropy.table import Table
 import numpy as np
+
+MODPATH = os.path.dirname(__file__)
 
 ##### LF's from the literature #####
 
