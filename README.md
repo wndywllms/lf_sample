@@ -5,10 +5,10 @@ Tools to compute LF for generic radio-optical catalogues:
 * `examples` directory contains 
 `use_lf_sample.py` : with some example code using lf_sample
 
-An `lf_sample` instance needs to be initilised minimally with an identifier and catalogue. The catalogue is an astropy Table with fields `z`, `power`, `opt_lum`. The example contains a catalogue utility function 
+An `sample` instance needs to be initilised minimally with an identifier and catalogue. The catalogue is an astropy Table with fields `z`, `power`, `opt_lum`. The example contains a catalogue utility function 
 
 
-`lf_sample`  Routines:
+`sample`  Routines:
 
 * `calc_zmin_zmax` - calculates zmin and zmax needed for LF (will save this to files and read from a saved file if it exists)
 
@@ -19,6 +19,6 @@ An `lf_sample` instance needs to be initilised minimally with an identifier and 
 * `get_LF_f_areal` - call to  `get_LF_f_areal` in `LF_util`
 
 
-`LF_util`  Routines:
+`util`  Routines:
 
 * `get_LF_f_areal` - compute LF for given power bins, power, zmin, zmax, fcor, areal, area
