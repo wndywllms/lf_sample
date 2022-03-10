@@ -214,6 +214,27 @@ class lf_sample:
         
         return new_self
     
+    
+    def sub_sample_by_field_value(self, name, field, value, req_new_volumes=False, plot=False):
+        ''' make a new subsample with name 'name' from the z range provided'''
+        
+        #new_self = self.copy()
+        #new_self.name = name
+                
+        ind = np.where((self.cat[field] == value ))[0]
+        # handle no sources in selection
+        if len(ind) == 0:
+            return None
+        print('subsample {n} : {n1} out of {n2} sources selected on field {f}'.format(n=name,n1=len(ind),n2=len(self.cat),f=field))
+        new_self = self.sub_sample_ind(name, ind)
+        
+        # calculate new zmin, zmax if needed
+        if req_new_volumes:
+            #new_self.calc_zmin_zmax()
+            new_self.calc_Vzmin_Vzmax(plot=plot)
+        
+        return new_self
+    
     def sub_sample_ind(self, name, ind):
         ''' make a new subsample with name 'name' from the catalogue indicies'''
         
