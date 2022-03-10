@@ -38,16 +38,19 @@ def get_novak_lf_model(z=0, scalef=150.):
 
 
 def get_BH(ttype='all', f=150.):
+    '''
+    f in MHz
+    '''
     # load Best & Heckman LF
     BHLF = Table.read(os.path.join(MODPATH,'data/LFs/bestheckmanLF.fits'))
     logPlow = BHLF['Plow']
     logPhigh = BHLF['Phigh']
     logp_BH = (logPlow+logPhigh)/2.
 
-    # scale to 150 MHz
-    if f == 150.:
+    # scale to f
+    if f != 1400.:
         alpha = -0.7
-        logp_BH = logp_BH + alpha*np.log10(150./1400)
+        logp_BH = logp_BH + alpha*np.log10(f/1400)
         
 
     if ttype == 'all':
@@ -81,6 +84,9 @@ def get_BH(ttype='all', f=150.):
     return x, y, np.array([yerru,yerrl])
 
 def get_MS(ttype='agn', f=150.):
+    '''
+    f in MHz
+    '''
     if ttype == 'agn':
         ff = os.path.join(MODPATH,'data/LFs/ms-agn.txt') 
     elif ttype =='sf':
@@ -111,10 +117,10 @@ def get_MS(ttype='agn', f=150.):
     x = t['x']
     
     
-    # scale to 150 MHz
-    if f == 150.:
+    # scale to f MHz
+    if f != 1400.:
         alpha = -0.7
-        x = x + alpha*np.log10(150./1400)
+        x = x + alpha*np.log10(f/1400)
     
     y = 2.5*10**t['y']
     yerru = 2.5*(10**(t['y']+t['yerru']) - 10**(t['y']))
@@ -124,6 +130,9 @@ def get_MS(ttype='agn', f=150.):
 
 
 def get_P(ttype='agn', f=150.):
+    '''
+    f in MHz
+    '''
     if ttype == 'agn':
         ff = os.path.join(MODPATH,'data/LFs/prescott-agn.txt')
     elif ttype =='sf':
@@ -150,10 +159,10 @@ def get_P(ttype='agn', f=150.):
     x = t['x']
     
     
-    # scale to 150 MHz
-    if f == 150.:
+    # scale to f MHz
+    if f != 1400.:
         alpha = -0.7
-        x = x + alpha*np.log10(150./325)
+        x = x + alpha*np.log10(f/325)
     
     y = 2.5*t['y']
     yerru = 2.5*t['yerru']
@@ -199,14 +208,17 @@ def get_mjh(ttype='agn', zbin=None):
 
 
 def get_pracy_LF(ttype='all', f=150.):
-    # load Best & Heckman LF
+    '''
+    f in MHz
+    '''
+    # load Pracy
     PLF = Table.read(os.path.join(MODPATH,'data/LFs/pracy.fits'))
     logp_P = PLF['P']
 
-    # scale to 150 MHz
-    if f == 150.:
+    # scale to f MHz
+    if f != 1400.:
         alpha = -0.7
-        logp_P = logp_P + alpha*np.log10(150./1400)
+        logp_P = logp_P + alpha*np.log10(f/1400)
         
 
     if ttype == 'all':
